@@ -1,0 +1,9 @@
+### Coverage report: 
+```verilog
+vlog -coveropt 3 +cover +acc basicSimulation/basicSimulation/counter/counter.v basicSimulation/basicSimulation/counter/tcounter.v 
+ 
+vsim -coverage -vopt work.test_counter -c -do "coverage save -onexit -directive -codeAll counter.ucdb;run -all" 
+ 
+vcover report -html counter.ucdb
+```
+
