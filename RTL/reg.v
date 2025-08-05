@@ -16,7 +16,7 @@
 // ==============================================
 // Default Reset Values
 // ==============================================
-`define TDR_RST   8'h00				  
+`define TDR_RST   {`DATA_WIDTH{1'b0}} 		  
 `define TCR_RST   8'h00				  
 `define TSR_RST   8'h00				  
 `define TCNT_RST  {`DATA_WIDTH{1'b0}} 
