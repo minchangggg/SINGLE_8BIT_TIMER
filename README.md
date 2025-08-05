@@ -7,20 +7,3 @@
 > https://drive.google.com/file/d/1VBGAYnm5E8hJzKte92bYFMj9ZpBJ-C6u/view?usp=sharing
 ## Spec
 > https://docs.google.com/document/d/1MWFPSSpyvAOfyE73gY4Epjnr4SBS5SaxvoPs2WZEiMk/edit?usp=sharing
-
-## RTL
-> https://edaplayground.com/x/CQwR
-
-
-
-
-
-
-
-
-
-
-
-
-
-
