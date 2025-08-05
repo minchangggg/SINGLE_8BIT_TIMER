@@ -1,8 +1,7 @@
 // -----------------------------------------------------------------------------
 // Description:
 // * This file defines macro constants for Single 8-bit timer design.
-// * It includes register addresses (TDR, TCR, TSR, TCNT),
-     reset values, and bit positions for control/status fields.
+// * It includes register addresses (TDR, TCR, TSR, TCNT), reset values, and bit positions for control/status fields.
 // * These definitions help standardize RTL modules and testbenches.
 // -----------------------------------------------------------------------------
 
