@@ -1,3 +1,26 @@
+// -----------------------------------------------------------------------------
+// Module: detect_cnt_edge
+// Description:
+//   This module detects the rising edge of a selected divided clock (CLK_IN)
+//   and generates a one-cycle pulse (TMR_Edge) in the pclk domain.
+//   It safely synchronizes the clock select signal (cks) before using it,
+//   and performs edge detection by delaying the selected clock.
+//
+// Features:
+//   - Supports 4 clock sources: pclk/2, /4, /8, /16 via CLK_IN[3:0]
+//   - Clock source selected by 2-bit control cks (synchronized)
+//   - Rising edge detection generates a one-cycle TMR_Edge pulse
+//
+// Inputs:
+//   - pclk     : System clock
+//   - preset_n : Active-low reset
+//   - CLK_IN   : 4 divided clock inputs
+//   - cks      : Clock select control signal
+//
+// Output:
+//   - TMR_Edge : One-clock pulse when selected clock has rising edge
+// -----------------------------------------------------------------------------
+
 module detect_cnt_edge (
   input  wire       pclk,         // system clock
   input  wire       preset_n,     // active-low reset
