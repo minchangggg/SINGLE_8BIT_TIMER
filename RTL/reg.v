@@ -1,11 +1,10 @@
-/**
- * Description:
- * This file defines macro constants for Single 8-bit timer design.
- * It includes register addresses (TDR, TCR, TSR, TCNT),
-   reset values, and bit positions for control/status fields.
- * These definitions help standardize RTL modules and testbenches.
- */
-
+// -----------------------------------------------------------------------------
+// * Description:
+// * This file defines macro constants for Single 8-bit timer design.
+// * It includes register addresses (TDR, TCR, TSR, TCNT),
+     reset values, and bit positions for control/status fields.
+// * These definitions help standardize RTL modules and testbenches.
+ // -----------------------------------------------------------------------------
 `ifndef __REG_V__
 `define __REG_V__
 // ==============================================
@@ -16,10 +15,10 @@
 // ==============================================
 // Default Reset Values
 // ==============================================
-`define TDR_RST   {`DATA_WIDTH{1'b0}} 		  
+`define TDR_RST   {`CNT_WIDTH{1'b0}} 		  
 `define TCR_RST   8'h00				  
 `define TSR_RST   8'h00				  
-`define TCNT_RST  {`DATA_WIDTH{1'b0}} 
+`define TCNT_RST  {`CNT_WIDTH{1'b0}} 
 
 // ==============================================
 // Register Address Map
