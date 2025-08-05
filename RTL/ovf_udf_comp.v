@@ -16,17 +16,18 @@
 //   - Separate clear signals for OVF and UDF flags
 //   - Synchronous reset and edge-based detection
 //
-//   Inputs:
-//     - pclk         : System clock
-//     - preset_n     : Active-low synchronous reset
-//     - TCNT         : Current counter value (width defined by `CNT_WIDTH)
-//     - count_enable : Enable signal for counting
-//     - count_up_down: 0 = count up, 1 = count down
-//     - clr_ovf      : Clear overflow flag
-//     - clr_udf      : Clear underflow flag
-//   Outputs:
-//     - TMR_OVF      : Overflow flag (set when counter wraps from max to 0)
-//     - TMR_UDF      : Underflow flag (set when counter wraps from 0 to max)
+// Inputs:
+//   - pclk         : System clock
+//   - preset_n     : Active-low synchronous reset
+//   - TCNT         : Current counter value (width defined by `CNT_WIDTH)
+//   - count_enable : Enable signal for counting
+//   - count_up_down: 0 = count up, 1 = count down
+//   - clr_ovf      : Clear overflow flag
+//   - clr_udf      : Clear underflow flag
+//
+// Outputs:
+//   - TMR_OVF      : Overflow flag (set when counter wraps from max to 0)
+//   - TMR_UDF      : Underflow flag (set when counter wraps from 0 to max)
 // -----------------------------------------------------------------------------
 
 module ovf_udf_comp (
