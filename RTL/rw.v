@@ -24,8 +24,6 @@
 //   - PADDR         : APB address bus.
 //   - PWDATA        : APB write data bus.
 //   - TCNT          : Current counter value (from counter unit).
-//   - TMR_OVF       : Overflow flag (from comparator).
-//   - TMR_UDF       : Underflow flag (from comparator).
 //
 // Outputs:
 //   - PRDATA        : APB read data bus.
@@ -55,17 +53,13 @@ module rw_reg_control #(
   input  wire [`DATA_WIDTH-1:0] TCNT,
   output wire [`DATA_WIDTH-1:0] TDR_reg,
   output wire [`DATA_WIDTH-1:0] TCR_reg,
-  output wire [`DATA_WIDTH-1:0] TSR_reg,
-
-  // STATUS FLAGS
-  input  wire                   TMR_OVF,
-  input  wire                   TMR_UDF
+  output wire [`DATA_WIDTH-1:0] TSR_reg
 );
   
   // Internal wires for connecting sub-modules
   wire apb_pready;
   wire apb_pslverr;
-  wire [2:0] w_reg;
+  wire [2:0] w_reg; 
 
   // ------------------------------------------------------------------
   // Module Instantiations
@@ -97,7 +91,6 @@ module rw_reg_control #(
 
   // Write Logic Module
   // This module handles writing to TDR, TCR, and TSR registers.
-  // It also manages the TSR flag updates from external signals.
   rw_write_logic #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_rw_write_logic (
@@ -109,8 +102,6 @@ module rw_reg_control #(
     .pwrite    (PWRITE),
     .pwdata    (PWDATA),
     .paddr     (PADDR),
-    .TMR_OVF   (TMR_OVF),
-    .TMR_UDF   (TMR_UDF),
     .TDR_reg   (TDR_reg),
     .TCR_reg   (TCR_reg),
     .TSR_reg   (TSR_reg)
@@ -195,9 +186,7 @@ module rw_write_logic #(
   input  wire                   penable,
   input  wire                   pwrite,
   input  wire [ADDR_WIDTH-1:0]  paddr,
-  input  wire [`DATA_WIDTH-1:0] pwdata,
-  input  wire                   TMR_OVF,
-  input  wire                   TMR_UDF,
+  input  wire [`DATA_WIDTH-1:0] TCNT,
   output reg  [`DATA_WIDTH-1:0] TDR_reg,
   output reg  [`DATA_WIDTH-1:0] TCR_reg,
   output reg  [`DATA_WIDTH-1:0] TSR_reg
@@ -222,11 +211,11 @@ module rw_write_logic #(
           `TDR_ADDR  : TDR_reg <= pwdata;         // Write to TDR
           `TCR_ADDR  : TCR_reg <= wdata_tcr;      // Write to TCR
           `TSR_ADDR  : TSR_reg <= wdata_tsr;      // Write to TSR
-          default    : begin end
+          default    :  
         endcase
       end else begin
         // Update TSR with flags when not in a write cycle
-        TSR_reg <= {6'b0, TMR_UDF, TMR_OVF};
+        
       end
     end
   end
