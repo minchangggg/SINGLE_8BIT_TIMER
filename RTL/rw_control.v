@@ -1,17 +1,50 @@
+`ifndef RW_REGISTER_V
+`define RW_REGISTER_V
+
 `include "reg_def.v"
 // `DATA_WIDTH = 8
+
+// -----------------------------------------------------------------------------
+// Module: rw_register
+// Description:
+//   - This module implements a read/write register block that interfaces with
+//   the APB (Advanced Peripheral Bus) protocol. It handles address decoding,
+//   data transfers, and manages four internal Special Function Registers (SFRs).
+//
+// Parameters:
+//   - ADDR_WIDTH : Width of the APB address bus.
+//
+// Inputs:
+//   - pclk      : APB system clock.
+//   - presetn   : Active-low asynchronous reset.
+//   - psel      : APB peripheral select signal.
+//   - penable   : APB enable signal, high during the ACCESS phase.
+//   - pwrite    : APB write enable (1 for write, 0 for read).
+//   - paddr     : APB address bus.
+//   - pwdata    : APB write data bus.
+//
+// Outputs:
+//   - prdata    : APB read data bus.
+//   - pready    : APB ready signal, high when a transfer is complete.
+//   - pslverr   : APB slave error signal, high for an invalid address.
+//
+// Internal SFRs: TDR, TCR, TSR, TCNT
+//
+// Author: [Your Name Here]
+// Date: [Current Date]
+// -----------------------------------------------------------------------------
 
 module rw_register #(
   parameter ADDR_WIDTH = 8
 )(
   // SIGNAL FOR APB INTERFACE
-  input  wire                   PCLK,
-  input  wire                   PRESETn,
-  input  wire                   PSEL,
-  input  wire                   PENABLE,
-  input  wire                   PWRITE,
-  input  wire [ADDR_WIDTH-1:0]  PADDR,
-  input  wire [`DATA_WIDTH-1:0] PWDATA,
+  input  wire                    PCLK,
+  input  wire                    PRESETn,
+  input  wire                    PSEL,
+  input  wire                    PENABLE,
+  input  wire                    PWRITE,
+  input  wire [ADDR_WIDTH-1:0]   PADDR,
+  input  wire [`DATA_WIDTH-1:0]  PWDATA,
   
   output wire  [`DATA_WIDTH-1:0] PRDATA,
   output wire                    PREADY,
@@ -68,12 +101,12 @@ module rw_register #(
   // Logic to handle reserved bits before writing to registers
   // Note: No conditional logic here, the WRITE_reg module handle the write enable
   // Reserved bits fixed to 0
-  assign wdata_tdr = PWDATA;
-  assign wdata_tcr = {PWDATA[7], 1'b0, PWDATA[5:4], 2'b00, PWDATA[1:0]};
-  assign wdata_tsr = {6'b00, PWDATA[1:0]};
-//   assign wdata_tdr = (w_reg[0]) ? PWDATA : {`DATA_WIDTH{1'b0}};
-//   assign wdata_tcr = (w_reg[1]) ? {PWDATA[7], 1'b0, PWDATA[5:4], 2'b00, PWDATA[1:0]} : {`DATA_WIDTH{1'b0}};
-//   assign wdata_tsr = (w_reg[2]) ? {6'b00, PWDATA[1:0]}: {`DATA_WIDTH{1'b0}};
+//   assign wdata_tdr = PWDATA;
+//   assign wdata_tcr = {PWDATA[7], 1'b0, PWDATA[5:4], 2'b00, PWDATA[1:0]};
+//   assign wdata_tsr = {6'b00, PWDATA[1:0]};
+  assign wdata_tdr = (w_reg[0]) ? PWDATA : TDR;
+  assign wdata_tcr = (w_reg[1]) ? {PWDATA[7], 1'b0, PWDATA[5:4], 2'b00, PWDATA[1:0]} : TCR;
+  assign wdata_tsr = (w_reg[2]) ? {6'b00, PWDATA[1:0]}: TSR;
 
   // Instantiate the write modules for TDR, TCR, TSR
   WRITE_reg #(
@@ -141,7 +174,7 @@ module rw_register #(
   // reset and hold value logic for internal register
   // ------------------------------------------------------------------
   always @(posedge PCLK or negedge PRESETn) begin
-    if (!preset_n) begin
+    if (!PRESETn) begin
       // Reset internal registers
       TDR  <= `TDR_RST;
       TCR  <= `TCR_RST;
@@ -156,7 +189,9 @@ module rw_register #(
   end
 endmodule
 
-// ----------------------------------------------------------- OK
+// -----------------------------------------------------------
+// Sub-module: sel_w_reg (Write Register Select)
+// -----------------------------------------------------------
 module sel_w_reg #(
   parameter ADDR_WIDTH = 8
 )(
@@ -173,7 +208,9 @@ module sel_w_reg #(
   end
 endmodule
 
-// ----------------------------------------------------------- OK
+// -----------------------------------------------------------
+// Sub-module: write_reg (Write Register)
+// -----------------------------------------------------------
 module WRITE_reg #(
   parameter ADDR_WIDTH = 8
 )(
@@ -200,7 +237,9 @@ module WRITE_reg #(
   end
 endmodule
 
-// ----------------------------------------------------------- OK
+// -----------------------------------------------------------
+// Sub-module: read_reg (Read Register)
+// -----------------------------------------------------------
 module READ_reg #(
   parameter ADDR_WIDTH = 8
 )(
@@ -223,24 +262,26 @@ module READ_reg #(
   
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) 
-      out_rdata <= {`DATA_WIDTH{1'b0}};
+      out_prdata <= {`DATA_WIDTH{1'b0}};
     else begin
       if (read_en) begin
         case (paddr)
-          `TDR_ADDR  : out_rdata <= TDR;
-          `TCR_ADDR  : out_rdata <= TCR;
-          `TSR_ADDR  : out_rdata <= TSR;
-          `TCNT_ADDR : out_rdata <= TCNT;
-          default    : out_rdata <= {`DATA_WIDTH{1'b0}};
+          `TDR_ADDR  : out_prdata <= TDR;
+          `TCR_ADDR  : out_prdata <= TCR;
+          `TSR_ADDR  : out_prdata <= TSR;
+          `TCNT_ADDR : out_prdata <= TCNT;
+          default    : out_prdata <= {`DATA_WIDTH{1'b0}};
         endcase
       end else 
-        out_rdata <= out_rdata;
+        out_prdata <= out_prdata;
     end
   end
  
 endmodule
 
-// ----------------------------------------------------------- 
+// -----------------------------------------------------------
+// Sub-module: apb_trans (APB Transaction FSM)
+// -----------------------------------------------------------
 module APB_trans #(
   parameter ADDR_WIDTH = 8
 )(
@@ -279,7 +320,7 @@ module APB_trans #(
     endcase
   end
 
-  // Register read/write + output logic
+  // Output logic: pready and pslverr
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
       pready  <= 1'b0;
@@ -303,3 +344,5 @@ module APB_trans #(
   end
 
 endmodule
+
+`endif
