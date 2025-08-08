@@ -73,7 +73,7 @@ module detect_cnt_edge (
 
 endmodule
 
-// -----------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Module: FF_nbit
 // Description:
 //   - Parameterized N-bit D-Flip-Flop with asynchronous active-low reset.
@@ -90,7 +90,7 @@ endmodule
 //
 // Outputs:
 //   - Q        : Output data.
-// -----------------------------------------------------------
+// -----------------------------------------------------------------------------
 module FF_nbit #(
   parameter WIDTH = 1
 )(
