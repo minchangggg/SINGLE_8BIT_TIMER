@@ -1,11 +1,11 @@
-`ifndef RW_REGISTER_V
-`define RW_REGISTER_V
+`ifndef RW_REG_CONTROL_V
+`define RW_REG_CONTROL_V
 
 `include "reg_def.v"
 // `DATA_WIDTH = 8
 
 // -----------------------------------------------------------------------------
-// Module: rw_register
+// Module: rw_reg_control
 // Description:
 //   - This module implements a read/write register block that interfaces with
 //   the APB (Advanced Peripheral Bus) protocol. It handles address decoding,
@@ -29,12 +29,9 @@
 //   - pslverr   : APB slave error signal, high for an invalid address.
 //
 // Internal SFRs: TDR, TCR, TSR, TCNT
-//
-// Author: [Your Name Here]
-// Date: [Current Date]
 // -----------------------------------------------------------------------------
 
-module rw_register #(
+module rw_reg_control #(
   parameter ADDR_WIDTH = 8
 )(
   // SIGNAL FOR APB INTERFACE
