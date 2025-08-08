@@ -1,7 +1,8 @@
 `ifndef _LOGIC_CONTROL_V_
 `define _LOGIC_CONTROL_V_
 
-`include "reg.v"
+`include "reg_def.v"
+// `DATA_WIDTH = 8
 
 // -----------------------------------------------------------------------------
 // Module: logic_control
@@ -22,27 +23,27 @@
 //     - count_up_down     : 1 = up-counting, 0 = down-counting (from TCR[5])
 //     - count_enable      : Counter enable signal (from TCR[4])
 //     - cks               : 2-bit clock source select (from TCR[1:0])
-//     - TSR               : 2-bit Timer Status Register {UDF, OVF}
+//     - TSR               : 8-bit Timer Status Register {UDF, OVF}
 // -----------------------------------------------------------------------------
 
 module logic_control (
-  input  wire [`CNT_WIDTH-1:0] TDR,   			  // Timer Data Register
-  input  wire [7:0]            TCR,   			  // Timer Control Register
+  input  wire [`DATA_WIDTH-1:0] TDR,   			   // Timer Data Register
+  input  wire [7:0]             TCR,   			   // Timer Control Register
   
-  input  wire       		   TMR_OVF,    		  // Overflow flag
-  input  wire       		   TMR_UDF, 	      // Underflow flag
+  input  wire       		    TMR_OVF,    	   // Overflow flag
+  input  wire       		    TMR_UDF, 	       // Underflow flag
 
-  output wire [`CNT_WIDTH-1:0] count_start_value, // Value to load into TCNT
-  output wire       		   count_up_down,     // Direction control
-  output wire       		   count_enable,      // Counter enable
-  output wire [1:0] 		   cks,               // Clock source select
-
-  output wire [7:0] 		   TSR                // Timer status flags: [UDF, OVF]
+  output wire [`DATA_WIDTH-1:0] count_start_value, // Value to load into TCNT
+  output wire       		    count_up_down,     // Direction control
+  output wire       		    count_enable,      // Counter enable
+  
+  output wire [1:0] 		    cks,               // Clock source select
+  output wire [7:0] 		    TSR                // Timer status flags: [UDF, OVF]
 );
 
   // Load value to TCNT if TCR[7] is set, otherwise 0
-  assign count_start_value = (TCR[7]) ? TDR : {`CNT_WIDTH{1'b0}};
-
+  assign count_start_value = (TCR[7]) ? TDR : {`DATA_WIDTH{1'b0}};
+  
   // Extract control signals
   assign count_up_down  = TCR[5];
   assign count_enable   = TCR[4];
