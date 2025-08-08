@@ -1,7 +1,8 @@
 `ifndef CNT_UNIT_V
 `define CNT_UNIT_V
 
-`include "reg.v"
+`include "reg_def.v"
+// `DATA_WIDTH = 8
 
 //-----------------------------------------------------------------------------
 // Module: cnt_unit
@@ -29,16 +30,16 @@
 //-----------------------------------------------------------------------------
 
 module cnt_unit (
-  input  wire                  pclk,              // System clock
-  input  wire                  preset_n,          // Active-low synchronous reset
+  input  wire                   pclk,              // System clock
+  input  wire                   preset_n,          // Active-low synchronous reset
 
-  input  wire                  TMR_Edge,          // Clock edge from selected clock source
-  input  wire [`CNT_WIDTH-1:0] count_start_value, // Load value when count_load is asserted
-  input  wire                  count_load,        // Load enable
-  input  wire                  count_enable,      // Enable counting
-  input  wire                  count_up_down,     // 0 = up count, 1 = down count
+  input  wire                   TMR_Edge,          // Clock edge from selected clock source
+  input  wire [`DATA_WIDTH-1:0] count_start_value, // Load value when count_load is asserted
+  input  wire                   count_load,        // Load enable
+  input  wire                   count_enable,      // Enable counting
+  input  wire                   count_up_down,     // 0 = up count, 1 = down count
 
-  output reg  [`CNT_WIDTH-1:0] TCNT               // Current count value
+  output reg  [`DATA_WIDTH-1:0] TCNT               // Current count value
 );  
 
   always @(posedge pclk or negedge preset_n) begin
@@ -51,10 +52,10 @@ module cnt_unit (
     else if (count_enable && TMR_Edge) begin
       if (!count_up_down) begin
         // Up count: wrap to 0 when max
-        TCNT <= (TCNT == {`CNT_WIDTH{1'b1}}) ? {`CNT_WIDTH{1'b0}} : TCNT + 1'b1;
+        TCNT <= (TCNT == {`DATA_WIDTH{1'b1}}) ? {`DATA_WIDTH{1'b0}} : TCNT + 1'b1;
       end else begin
         // Down count: wrap to max when 0
-        TCNT <= (TCNT == {`CNT_WIDTH{1'b0}}) ? {`CNT_WIDTH{1'b1}} : TCNT - 1'b1;
+        TCNT <= (TCNT == {`DATA_WIDTH{1'b0}}) ? {`DATA_WIDTH{1'b1}} : TCNT - 1'b1;
       end
     end
     else begin
