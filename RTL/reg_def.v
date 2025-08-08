@@ -6,20 +6,20 @@
 // * These definitions help standardize RTL modules and testbenches.
 // -----------------------------------------------------------------------------
 
-`ifndef __REG_V__
-`define __REG_V__
+`ifndef __REG_DEF_V__
+`define __REG_DEF_V__
 // ==============================================
 // Common Parameters
 // ==============================================
-`define CNT_WIDTH 8
+`define DATA_WIDTH 8
 
 // ==============================================
 // Default Reset Values
 // ==============================================
-`define TDR_RST   {`CNT_WIDTH{1'b0}} 		  
-`define TCR_RST   8'h00				  
-`define TSR_RST   8'h00				  
-`define TCNT_RST  {`CNT_WIDTH{1'b0}} 
+`define TDR_RST   {`DATA_WIDTH{1'b0}} 		  
+`define TCR_RST   {`DATA_WIDTH{1'b0}} 				  
+`define TSR_RST   {`DATA_WIDTH{1'b0}} 			  
+`define TCNT_RST  {`DATA_WIDTH{1'b0}} 
 
 // ==============================================
 // Register Address Map
@@ -30,11 +30,11 @@
 `define TCNT_ADDR 8'h03
 
 // ==============================================
-// TDR (Timer Data Register)
+// TDR (an 8-bit Timer Data Register)
 // ==============================================
 
 // ==============================================
-// TCR (Timer Control Register)
+// TCR (Timer Control Register) - 8
 // ==============================================
 // TCR[7]  : LOAD     | 1: Load TCNT 
 // TCR[5]  : UPDOWN   | 0: Up-count, 1: Down-count
@@ -47,7 +47,7 @@
 `define TCR_CKS_LSB    0
 
 // ==============================================
-// TSR (Timer Status Register)
+// TSR (an 8-bit Timer Status Register)
 // ==============================================
 // Bit positions
 // TSR[1] : TMR_UDF | Underflow flag (1: TCNT underflowed, set by HW, clear by SW)
@@ -56,4 +56,3 @@
 `define TMR_OVF_BIT  0     // Overflow Flag
 
 `endif
-
