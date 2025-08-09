@@ -1,5 +1,7 @@
 # `SINGLE 8 BIT TIMER`
+<img width="100" alt="image" src="https://github.com/user-attachments/assets/6cdc11a2-f839-4609-b6ec-6817268e57f6">
 A fully-synchronous 8-bit timer IP core with APB interface. Supports programmable clock sources, up/down counting modes, and interrupt generation. Designed and verified in Verilog with modular RTL and self-checking testbench.
+
 ## Block diagram
 A Timer Module in its most basic form is a digital logic circuit that counts up or counts down every clock cycle.
 
