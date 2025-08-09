@@ -64,4 +64,4 @@ module cnt_unit (
   end
 
 endmodule
-`endif
+`endif // CNT_UNIT_V
