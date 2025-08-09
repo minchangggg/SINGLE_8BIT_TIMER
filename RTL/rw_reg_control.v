@@ -33,6 +33,7 @@
 //   - TCR           : Internal Timer Control Register value.
 //   - TSR           : Internal Timer Status Register value.
 // -----------------------------------------------------------------------------
+
 module rw_reg_control #(
   parameter ADDR_WIDTH = 8
 )(
