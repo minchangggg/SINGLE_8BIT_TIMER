@@ -1,4 +1,5 @@
-### Coverage report: 
+## [NOTE]
+### `Coverage report` 
 ```verilog
 vlog -coveropt 3 +cover +acc basicSimulation/basicSimulation/counter/counter.v basicSimulation/basicSimulation/counter/tcounter.v 
  
