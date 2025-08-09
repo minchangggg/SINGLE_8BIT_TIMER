@@ -16,6 +16,7 @@
 //   connects all the sub-modules, including the APB register file,
 //   the counter unit, and the control logic.
 // -----------------------------------------------------------------------------
+
 module ip_TIMER #(
   parameter ADDR_WIDTH = 8
 )(
