@@ -7,184 +7,240 @@
 // -----------------------------------------------------------------------------
 // Module: rw_reg_control
 // Description:
-//   - This module implements a read/write register block that interfaces with
-//   the APB (Advanced Peripheral Bus) protocol. It handles address decoding,
-//   data transfers, and manages four internal Special Function Registers (SFRs).
+//   This is the top-level module for the APB register file. It acts as a
+//   wrapper, instantiating and connecting the sub-modules for read and write
+//   logic. This modular design separates concerns for improved readability
+//   and maintainability.
 //
 // Parameters:
 //   - ADDR_WIDTH : Width of the APB address bus.
 //
 // Inputs:
-//   - pclk      : APB system clock.
-//   - presetn   : Active-low asynchronous reset.
-//   - psel      : APB peripheral select signal.
-//   - penable   : APB enable signal, high during the ACCESS phase.
-//   - pwrite    : APB write enable (1 for write, 0 for read).
-//   - paddr     : APB address bus.
-//   - pwdata    : APB write data bus.
+//   - PCLK          : APB system clock.
+//   - PRESETn       : Active-low asynchronous reset.
+//   - PSEL          : APB peripheral select signal.
+//   - PENABLE       : APB enable signal, high during the ACCESS phase.
+//   - PWRITE        : APB write enable (1 for write, 0 for read).
+//   - PADDR         : APB address bus.
+//   - PWDATA        : APB write data bus.
+//   - TCNT          : Current counter value (from counter unit).
 //
 // Outputs:
-//   - prdata    : APB read data bus.
-//   - pready    : APB ready signal, high when a transfer is complete.
-//   - pslverr   : APB slave error signal, high for an invalid address.
-//
-// Internal SFRs: TDR, TCR, TSR, TCNT
+//   - PRDATA        : APB read data bus.
+//   - PREADY        : APB ready signal, high when a transfer is complete.
+//   - PSLVERR       : APB slave error signal, high for an invalid address.
+//   - TDR           : Internal Timer Data Register value.
+//   - TCR           : Internal Timer Control Register value.
+//   - TSR           : Internal Timer Status Register value.
 // -----------------------------------------------------------------------------
-
 module rw_reg_control #(
   parameter ADDR_WIDTH = 8
 )(
-  // SIGNAL FOR APB INTERFACE
-  input  wire                    PCLK,
-  input  wire                    PRESETn,
-  input  wire                    PSEL,
-  input  wire                    PENABLE,
-  input  wire                    PWRITE,
-  input  wire [ADDR_WIDTH-1:0]   PADDR,
-  input  wire [`DATA_WIDTH-1:0]  PWDATA,
+  // APB INTERFACE SIGNALS
+  input  wire                   PCLK,
+  input  wire                   PRESETn,
+  input  wire                   PSEL,
+  input  wire                   PENABLE,
+  input  wire                   PWRITE,
+  input  wire [ADDR_WIDTH-1:0]  PADDR,
+  input  wire [`DATA_WIDTH-1:0] PWDATA,
   
-  output wire  [`DATA_WIDTH-1:0] PRDATA,
-  output wire                    PREADY,
-  output wire                    PSLVERR
+  output wire [`DATA_WIDTH-1:0] PRDATA,
+  output wire                   PREADY,
+  output wire                   PSLVERR,
+
+  // INTERNAL REGISTER VALUES (to be used by other modules)
+  input  wire [`DATA_WIDTH-1:0] TCNT,
+  output wire [`DATA_WIDTH-1:0] TDR,
+  output wire [`DATA_WIDTH-1:0] TCR,
+  output wire [`DATA_WIDTH-1:0] TSR
 );
+  reg [`DATA_WIDTH-1:0] reg_TDR;
+  reg [`DATA_WIDTH-1:0] reg_TCR;
+  reg [`DATA_WIDTH-1:0] reg_TSR;
+
+  // Internal wires for connecting sub-modules
+  wire [2:0] w_reg; // Output from address decoder
+  wire       apb_pready;
+  wire       apb_pslverr;
+
+  // ------------------------------------------------------------------
+  // Module Instantiations
+  // ------------------------------------------------------------------
   
-  // ------------------------------------------------------------------
-  // Internal SFR storage
-  // ------------------------------------------------------------------
-  reg  [`DATA_WIDTH-1:0] TDR;
-  reg  [`DATA_WIDTH-1:0] TCR;
-  reg  [`DATA_WIDTH-1:0] TSR;
-  reg  [`DATA_WIDTH-1:0] TCNT;
-  
-  // ------------------------------------------------------------------
-  // Wires to connect sub-modules
-  // ------------------------------------------------------------------
-  // One-hot selection for write (derived from PADDR)
-  wire [2:0] w_reg; // [0]=TDR, [1]=TCR, [2]=TSR
-  // Wires to hold write data after reserved bits are handled
-  wire [`DATA_WIDTH-1:0] wdata_tdr;
-  wire [`DATA_WIDTH-1:0] wdata_tcr;
-  wire [`DATA_WIDTH-1:0] wdata_tsr;
-  // Wires for APB_trans outputs
-  wire apb_pready;
-  wire apb_pslverr;
-  
-  // Instantiate the APB FSM module
+  // APB Transaction FSM
+  // This module manages the APB handshake and generates pready/pslverr signals.
   APB_trans #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_apb_trans (
-    .pclk     (PCLK),
-    .preset_n (PRESETn),
-    .psel     (PSEL),
-    .penable  (PENABLE),
-    .pwrite   (PWRITE),
-    .paddr    (PADDR),
-    .pready   (apb_pready),
-    .pslverr  (apb_pslverr)
+    .pclk      (PCLK),
+    .preset_n  (PRESETn),
+    .psel      (PSEL),
+    .penable   (PENABLE),
+    .pwrite    (PWRITE),
+    .paddr     (PADDR),
+    .pready    (apb_pready),
+    .pslverr   (apb_pslverr)
   );
-  
-  // Drive the main outputs with the signals from the APB FSM
-  assign PREADY  = apb_pready;
-  assign PSLVERR = apb_pslverr;
 
-  // Instantiate the register select logic TDR, TCR and TSR
+  // Write Address Decoder
+  // This module decodes the write address to select the target register.
   sel_w_reg #(
-    .ADDR_WIDTH(ADDR_WIDTH)           
+    .ADDR_WIDTH(ADDR_WIDTH)
   ) u_sel_w_reg (
     .paddr (PADDR),
     .w_reg (w_reg)
   );
 
-  // Logic to handle reserved bits before writing to registers
-  // Note: No conditional logic here, the WRITE_reg module handle the write enable
-  // Reserved bits fixed to 0
-//   assign wdata_tdr = PWDATA;
-//   assign wdata_tcr = {PWDATA[7], 1'b0, PWDATA[5:4], 2'b00, PWDATA[1:0]};
-//   assign wdata_tsr = {6'b00, PWDATA[1:0]};
-  assign wdata_tdr = (w_reg[0]) ? PWDATA : TDR;
-  assign wdata_tcr = (w_reg[1]) ? {PWDATA[7], 1'b0, PWDATA[5:4], 2'b00, PWDATA[1:0]} : TCR;
-  assign wdata_tsr = (w_reg[2]) ? {6'b00, PWDATA[1:0]}: TSR;
-
-  // Instantiate the write modules for TDR, TCR, TSR
-  WRITE_reg #(
+  // Write Logic Module
+  // This module handles writing to TDR, TCR, and TSR registers.
+  rw_write_logic #(
     .ADDR_WIDTH(ADDR_WIDTH)
-  ) u_write_tdr (
+  ) u_rw_write_logic (
     .pclk      (PCLK),
     .preset_n  (PRESETn),
-    .psel      (PSEL),
-    .penable   (PENABLE),
-    .pwrite    (PWRITE),  
     .pready    (apb_pready),
-    .reg4write (w_reg[0]), 
-    .pwdata    (wdata_tdr),   
-    .out_pwdata(TDR) 
-  );
-
-  WRITE_reg #(
-    .ADDR_WIDTH(ADDR_WIDTH)
-  ) u_write_tcr (
-    .pclk      (PCLK),
-    .preset_n  (PRESETn),
     .psel      (PSEL),
     .penable   (PENABLE),
     .pwrite    (PWRITE),
-    .pready    (apb_pready),
-    .reg4write (w_reg[1]), 
-    .pwdata    (wdata_tcr),   
-    .out_pwdata(TCR)  
+    .pwdata    (PWDATA),
+    .w_reg     (w_reg), // Pass the decoded write register signal
+    .TDR       (reg_TDR),
+    .TCR       (reg_TCR),
+    .TSR       (reg_TSR)
   );
 
-  WRITE_reg #(
+  // Read Logic Module
+  // This module handles reading from all registers (TDR, TCR, TSR, TCNT).
+  rw_read_logic #(
     .ADDR_WIDTH(ADDR_WIDTH)
-  ) u_write_tsr (
+  ) u_rw_read_logic (
     .pclk      (PCLK),
     .preset_n  (PRESETn),
+    .pready    (apb_pready),
     .psel      (PSEL),
     .penable   (PENABLE),
     .pwrite    (PWRITE),
-    .pready    (apb_pready),
-    .reg4write (w_reg[2]), 
-    .pwdata    (wdata_tsr),   
-    .out_pwdata(TSR) 
-  );
-
-  // Instantiate the read module
-  // Read data TDR, TCR, TSR and TCNT
-  READ_reg #(
-    .ADDR_WIDTH(ADDR_WIDTH)
-  ) u_read_reg (
-    .pclk     (PCLK),
-    .preset_n (PRESETn),
-    .psel     (PSEL),
-    .penable  (PENABLE),
-    .pwrite   (PWRITE),
-    .pready   (apb_pready),
-    .paddr    (PADDR),
-    .TDR      (TDR), 
-    .TCR      (TCR), 
-    .TSR      (TSR),
-    .TCNT     (TCNT),
-    .out_prdata(PRDATA)  
+    .paddr     (PADDR),
+    .TDR       (reg_TDR),
+    .TCR       (reg_TCR),
+    .TSR       (reg_TSR),
+    .TCNT      (TCNT),
+    .prdata    (PRDATA)
   );
   
   // ------------------------------------------------------------------
-  // reset and hold value logic for internal register
+  // Register reset logic: initialize internal registers on reset
   // ------------------------------------------------------------------
   always @(posedge PCLK or negedge PRESETn) begin
     if (!PRESETn) begin
       // Reset internal registers
-      TDR  <= `TDR_RST;
-      TCR  <= `TCR_RST;
-      TSR  <= `TSR_RST;
-      TCNT <= `TCNT_RST;
+      reg_TDR  <= `TDR_RST;
+      reg_TCR  <= `TCR_RST;
+      reg_TSR  <= `TSR_RST;
     end else begin
-      TDR  <= TDR;
-      TCR  <= TCR;
-      TSR  <= TSR;
-      TCNT <= TCNT;
+      reg_TDR  <= reg_TDR;
+      reg_TCR  <= reg_TCR;
+      reg_TSR  <= reg_TSR;
     end 
   end
+  
+  // Assign top-level outputs
+  assign PREADY  = apb_pready;
+  assign PSLVERR = apb_pslverr;
+  assign TDR     = reg_TDR;
+  assign TCR     = reg_TCR;
+  assign TSR     = reg_TSR;
+  
 endmodule
+
+
+// -----------------------------------------------------------
+// Sub-module: rw_read_logic
+// Description: Handles all read transactions from APB to the registers.
+// -----------------------------------------------------------
+module rw_read_logic #(
+  parameter ADDR_WIDTH = 8
+)(
+  input  wire                   pclk,
+  input  wire                   preset_n,
+  input  wire                   pready,
+  input  wire                   psel,
+  input  wire                   penable,
+  input  wire                   pwrite,
+  input  wire [ADDR_WIDTH-1:0]  paddr,
+  input  wire [`DATA_WIDTH-1:0] TDR,
+  input  wire [`DATA_WIDTH-1:0] TCR,
+  input  wire [`DATA_WIDTH-1:0] TSR,
+  input  wire [`DATA_WIDTH-1:0] TCNT,
+  output reg  [`DATA_WIDTH-1:0] prdata
+);
+
+  wire read_en;
+  assign read_en = psel & penable & !pwrite & pready;
+
+  always @(posedge pclk or negedge preset_n) begin
+    if (!preset_n)
+      prdata <= {`DATA_WIDTH{1'b0}};
+    else begin
+      if (read_en) begin
+        case (paddr)
+          `TDR_ADDR  : prdata <= TDR;
+          `TCR_ADDR  : prdata <= TCR;
+          `TSR_ADDR  : prdata <= TSR;
+          `TCNT_ADDR : prdata <= TCNT;
+          default    : prdata <= {`DATA_WIDTH{1'b0}};
+        endcase
+      end
+    end
+  end
+endmodule
+
+// -----------------------------------------------------------
+// Sub-module: rw_write_logic
+// Description: Handles all write transactions from APB to the registers.
+// -----------------------------------------------------------
+module rw_write_logic #(
+  parameter ADDR_WIDTH = 8
+)(
+  input  wire                   pclk,
+  input  wire                   preset_n,
+  input  wire                   pready,
+  input  wire                   psel,
+  input  wire                   penable,
+  input  wire                   pwrite,
+  input  wire [`DATA_WIDTH-1:0] pwdata,
+  input  wire [2:0]             w_reg, // Input for write register select
+  output reg  [`DATA_WIDTH-1:0] TDR,
+  output reg  [`DATA_WIDTH-1:0] TCR,
+  output reg  [`DATA_WIDTH-1:0] TSR
+);
+
+  wire write_en;
+  assign write_en = (psel & penable & pwrite & pready) & |w_reg;
+
+  // Logic to handle reserved bits before writing to registers
+  wire [`DATA_WIDTH-1:0] wdata_tdr;
+  wire [`DATA_WIDTH-1:0] wdata_tcr;
+  wire [`DATA_WIDTH-1:0] wdata_tsr;
+  
+  assign wdata_tdr = pwdata;
+  assign wdata_tcr = {pwdata[7], 1'b0, pwdata[5:4], 2'b00, pwdata[1:0]};
+  assign wdata_tsr = {6'b00, pwdata[1:0]};
+
+  always @(posedge pclk or negedge preset_n) begin
+    if (!preset_n) begin
+      TDR <= `TDR_RST;
+      TCR <= `TCR_RST;
+      TSR <= `TSR_RST;
+    end else if (write_en) begin
+      TDR <= (w_reg[0]) ? wdata_tdr : TDR;
+      TCR <= (w_reg[1]) ? wdata_tcr : TCR;
+      TSR <= (w_reg[2]) ? wdata_tsr : TSR;
+    end
+  end
+endmodule
+
 
 // -----------------------------------------------------------
 // Sub-module: sel_w_reg (Write Register Select)
@@ -197,84 +253,14 @@ module sel_w_reg #(
 );
   always @(*) begin
     case (paddr)
-      `TDR_ADDR  : w_reg <= 3'b001;
-      `TCR_ADDR  : w_reg <= 3'b010;
-      `TSR_ADDR  : w_reg <= 3'b100;
-      default    : w_reg <= 3'b000;
+      `TDR_ADDR  : w_reg = 3'b001;
+      `TCR_ADDR  : w_reg = 3'b010;
+      `TSR_ADDR  : w_reg = 3'b100;
+      default    : w_reg = 3'b000;
     endcase
   end
 endmodule
 
-// -----------------------------------------------------------
-// Sub-module: write_reg (Write Register)
-// -----------------------------------------------------------
-module WRITE_reg #(
-  parameter ADDR_WIDTH = 8
-)(
-  input  wire                   pclk,
-  input  wire                   preset_n,
-  input  wire                   psel,
-  input  wire                   penable,
-  input  wire                   pwrite,
-  input  wire                   reg4write,
-  input  wire                   pready,
-  input  wire [`DATA_WIDTH-1:0] pwdata,
-  output reg  [`DATA_WIDTH-1:0] out_pwdata
-);
-  // Simplified the write enable logic
-  wire write_en;
-  assign write_en = (psel & penable & pwrite & pready) & reg4write;
-  
-  always @(posedge pclk or negedge preset_n) begin
-    if (!preset_n) 
-      out_pwdata <= {`DATA_WIDTH{1'b0}};
-    else begin
-      out_pwdata <= (write_en) ? pwdata : out_pwdata;
-    end
-  end
-endmodule
-
-// -----------------------------------------------------------
-// Sub-module: read_reg (Read Register)
-// -----------------------------------------------------------
-module READ_reg #(
-  parameter ADDR_WIDTH = 8
-)(
-  input  wire                   pclk,
-  input  wire                   preset_n,
-  input  wire                   psel,
-  input  wire                   penable,
-  input  wire                   pwrite,
-  input  wire [ADDR_WIDTH-1:0]  paddr,
-  input  wire                   pready,
-  input  wire [`DATA_WIDTH-1:0] TDR, 
-  input  wire [`DATA_WIDTH-1:0] TCR, 
-  input  wire [`DATA_WIDTH-1:0] TSR,
-  input  wire [`DATA_WIDTH-1:0] TCNT,
-  output reg  [`DATA_WIDTH-1:0] out_prdata
-);
-  // Simplified the read enable logic
-  wire read_en;
-  assign read_en = psel & penable & pready & !pwrite;
-  
-  always @(posedge pclk or negedge preset_n) begin
-    if (!preset_n) 
-      out_prdata <= {`DATA_WIDTH{1'b0}};
-    else begin
-      if (read_en) begin
-        case (paddr)
-          `TDR_ADDR  : out_prdata <= TDR;
-          `TCR_ADDR  : out_prdata <= TCR;
-          `TSR_ADDR  : out_prdata <= TSR;
-          `TCNT_ADDR : out_prdata <= TCNT;
-          default    : out_prdata <= {`DATA_WIDTH{1'b0}};
-        endcase
-      end else 
-        out_prdata <= out_prdata;
-    end
-  end
- 
-endmodule
 
 // -----------------------------------------------------------
 // Sub-module: apb_trans (APB Transaction FSM)
@@ -293,9 +279,9 @@ module APB_trans #(
   output reg                    pslverr
 );
   // FSM state encoding for APB protocol
-  localparam IDLE   = 2'b00,
-             SETUP  = 2'b01,
-             ACCESS = 2'b10;
+  localparam IDLE   = 2'b00;
+  localparam SETUP  = 2'b01;
+  localparam ACCESS = 2'b10;
   reg [1:0]  cur_state, next_state;
 
   // FSM: State transition
@@ -309,10 +295,9 @@ module APB_trans #(
   // FSM: Next state logic
   always @(*) begin
     case (cur_state)
-      IDLE:    next_state = (psel && !penable) ? SETUP  : IDLE;
+      IDLE:    next_state = (psel && !penable) ? SETUP : IDLE;
       SETUP:   next_state = (psel &&  penable) ? ACCESS : SETUP;
       ACCESS:  next_state = IDLE;
-        	   // next_state = (!psel) ? IDLE : (!penable) ? SETUP : ACCESS;
       default: next_state = IDLE;
     endcase
   end
@@ -330,16 +315,15 @@ module APB_trans #(
         pready  <= 1'b1;
         // Check for invalid address
         if (pwrite) begin
-          if (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR) 
-            pslverr <= 1'b1;  
+          if (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR)
+            pslverr <= 1'b1;
         end else begin
-          if (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR) 
-            pslverr <= 1'b1; 
+          if (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR)
+            pslverr <= 1'b1;
         end
       end
     end
   end
-
 endmodule
 
-`endif
+`endif // RW_REG_CONTROL_V
