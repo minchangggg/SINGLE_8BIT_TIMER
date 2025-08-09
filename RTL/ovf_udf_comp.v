@@ -1,6 +1,3 @@
-// Note: có cần thêm việc xóa flag ko ... nếu thêm thì như nào
-// Phần lưu TCNT trước đó có cần dùng FF ko, hay gán ko chặn như dưới cx đc 
-
 `ifndef OVF_UDF_COMP_V
 `define OVF_UDF_COMP_V
 
