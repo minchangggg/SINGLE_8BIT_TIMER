@@ -1,5 +1,6 @@
 # `SINGLE 8 BIT TIMER`
-<img width="100" alt="image" src="https://github.com/user-attachments/assets/6cdc11a2-f839-4609-b6ec-6817268e57f6">
+## Overview
+<img width="100" alt="image" src="https://github.com/user-attachments/assets/0f718b34-c111-49ce-9a1c-70c1e538f0e0">
 A fully-synchronous 8-bit timer IP core with APB interface. Supports programmable clock sources, up/down counting modes, and interrupt generation. Designed and verified in Verilog with modular RTL and self-checking testbench.
 
 ## Block diagram
