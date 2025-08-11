@@ -1,6 +1,11 @@
 `ifndef RW_REG_CONTROL_V
 `define RW_REG_CONTROL_V
 
+// FSM state encoding for APB protocol
+`define IDLE   2'b00
+`define SETUP  2'b01
+`define ACCESS 2'b10
+
 `include "reg_def.v"
 // `DATA_WIDTH = 8
 
@@ -33,7 +38,6 @@
 //   - TCR           : Internal Timer Control Register value.
 //   - TSR           : Internal Timer Status Register value.
 // -----------------------------------------------------------------------------
-
 module rw_reg_control #(
   parameter ADDR_WIDTH = 8
 )(
@@ -61,9 +65,10 @@ module rw_reg_control #(
   reg [`DATA_WIDTH-1:0] reg_TSR;
 
   // Internal wires for connecting sub-modules
-  wire [2:0] w_reg; // Output from address decoder
-  wire       apb_pready;
-  wire       apb_pslverr;
+  reg  [2:0] w_reg;           // Output from address decoder
+  wire [1:0] apb_pcurrstate;  
+  wire       apb_pready;	  
+  wire       apb_pslverr;	  
 
   // ------------------------------------------------------------------
   // Module Instantiations
@@ -74,12 +79,15 @@ module rw_reg_control #(
   APB_trans #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_apb_trans (
+    // input
     .pclk      (PCLK),
     .preset_n  (PRESETn),
     .psel      (PSEL),
     .penable   (PENABLE),
     .pwrite    (PWRITE),
     .paddr     (PADDR),
+    // output
+    .pcurrstate(apb_pcurrstate),
     .pready    (apb_pready),
     .pslverr   (apb_pslverr)
   );
@@ -89,7 +97,9 @@ module rw_reg_control #(
   sel_w_reg #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_sel_w_reg (
+    // input
     .paddr (PADDR),
+    // output
     .w_reg (w_reg)
   );
 
@@ -98,6 +108,7 @@ module rw_reg_control #(
   rw_write_logic #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_rw_write_logic (
+    // input
     .pclk      (PCLK),
     .preset_n  (PRESETn),
     .pready    (apb_pready),
@@ -106,6 +117,8 @@ module rw_reg_control #(
     .pwrite    (PWRITE),
     .pwdata    (PWDATA),
     .w_reg     (w_reg), // Pass the decoded write register signal
+    .pcurrstate(apb_pcurrstate),
+    // output
     .TDR       (reg_TDR),
     .TCR       (reg_TCR),
     .TSR       (reg_TSR)
@@ -116,6 +129,7 @@ module rw_reg_control #(
   rw_read_logic #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_rw_read_logic (
+    // input
     .pclk      (PCLK),
     .preset_n  (PRESETn),
     .pready    (apb_pready),
@@ -127,6 +141,8 @@ module rw_reg_control #(
     .TCR       (reg_TCR),
     .TSR       (reg_TSR),
     .TCNT      (TCNT),
+    .pcurrstate(apb_pcurrstate),
+    // output
     .prdata    (PRDATA)
   );
   
@@ -136,9 +152,12 @@ module rw_reg_control #(
   always @(posedge PCLK or negedge PRESETn) begin
     if (!PRESETn) begin
       // Reset internal registers
-      reg_TDR  <= `TDR_RST;
-      reg_TCR  <= `TCR_RST;
-      reg_TSR  <= `TSR_RST;
+      reg_TDR <= `TDR_RST;
+      reg_TCR <= `TCR_RST;
+      reg_TSR <= `TSR_RST;
+      PRDATA  <= {`DATA_WIDTH{1'b0}};
+      PREADY  <= 1'b0;
+      PSLVERR <= 1'b0;
     end else begin
       reg_TDR  <= reg_TDR;
       reg_TCR  <= reg_TCR;
@@ -152,9 +171,7 @@ module rw_reg_control #(
   assign TDR     = reg_TDR;
   assign TCR     = reg_TCR;
   assign TSR     = reg_TSR;
-  
 endmodule
-
 
 // -----------------------------------------------------------
 // Sub-module: rw_read_logic
@@ -174,26 +191,25 @@ module rw_read_logic #(
   input  wire [`DATA_WIDTH-1:0] TCR,
   input  wire [`DATA_WIDTH-1:0] TSR,
   input  wire [`DATA_WIDTH-1:0] TCNT,
+  input  wire [1:0]             pcurrstate,
   output reg  [`DATA_WIDTH-1:0] prdata
 );
 
   wire read_en;
-  assign read_en = psel & penable & !pwrite & pready;
+  assign read_en = (pcurrstate == `ACCESS) & !pwrite;
 
-  always @(posedge pclk or negedge preset_n) begin
-    if (!preset_n)
-      prdata <= {`DATA_WIDTH{1'b0}};
-    else begin
-      if (read_en) begin
-        case (paddr)
-          `TDR_ADDR  : prdata <= TDR;
-          `TCR_ADDR  : prdata <= TCR;
-          `TSR_ADDR  : prdata <= TSR;
-          `TCNT_ADDR : prdata <= TCNT;
-          default    : prdata <= {`DATA_WIDTH{1'b0}};
-        endcase
-      end
-    end
+  always @(*) begin
+    if (read_en) begin
+      case (paddr)
+        `TDR_ADDR  : prdata <= TDR;
+        `TCR_ADDR  : prdata <= TCR;
+        `TSR_ADDR  : prdata <= TSR;
+        `TCNT_ADDR : prdata <= TCNT;
+        default    : prdata <= {`DATA_WIDTH{1'b0}};
+      endcase
+    end else begin
+      prdata <= prdata;
+    end 
   end
 endmodule
 
@@ -212,13 +228,15 @@ module rw_write_logic #(
   input  wire                   pwrite,
   input  wire [`DATA_WIDTH-1:0] pwdata,
   input  wire [2:0]             w_reg, // Input for write register select
+  input  wire [1:0]             pcurrstate,
+  
   output reg  [`DATA_WIDTH-1:0] TDR,
   output reg  [`DATA_WIDTH-1:0] TCR,
   output reg  [`DATA_WIDTH-1:0] TSR
 );
 
   wire write_en;
-  assign write_en = (psel & penable & pwrite & pready) & |w_reg;
+  assign write_en = (pcurrstate == `ACCESS) & pwrite & |w_reg;
 
   // Logic to handle reserved bits before writing to registers
   wire [`DATA_WIDTH-1:0] wdata_tdr;
@@ -229,15 +247,15 @@ module rw_write_logic #(
   assign wdata_tcr = {pwdata[7], 1'b0, pwdata[5:4], 2'b00, pwdata[1:0]};
   assign wdata_tsr = {6'b00, pwdata[1:0]};
 
-  always @(posedge pclk or negedge preset_n) begin
-    if (!preset_n) begin
-      TDR <= `TDR_RST;
-      TCR <= `TCR_RST;
-      TSR <= `TSR_RST;
-    end else if (write_en) begin
+  always @(*) begin
+    if (write_en) begin
       TDR <= (w_reg[0]) ? wdata_tdr : TDR;
       TCR <= (w_reg[1]) ? wdata_tcr : TCR;
       TSR <= (w_reg[2]) ? wdata_tsr : TSR;
+    end else begin 
+      TDR <= TDR;
+      TCR <= TCR;
+      TSR <= TSR;
     end
   end
 endmodule
@@ -254,10 +272,10 @@ module sel_w_reg #(
 );
   always @(*) begin
     case (paddr)
-      `TDR_ADDR  : w_reg = 3'b001;
-      `TCR_ADDR  : w_reg = 3'b010;
-      `TSR_ADDR  : w_reg = 3'b100;
-      default    : w_reg = 3'b000;
+      `TDR_ADDR : w_reg = 3'b001;
+      `TCR_ADDR : w_reg = 3'b010;
+      `TSR_ADDR : w_reg = 3'b100;
+      default   : w_reg = 3'b000;
     endcase
   end
 endmodule
@@ -276,43 +294,36 @@ module APB_trans #(
   input  wire                   penable,
   input  wire                   pwrite,
   input  wire [ADDR_WIDTH-1:0]  paddr,
+  
+  output reg [1:0]              pcurrstate,
   output reg                    pready,
-  output reg                    pslverr
+  output reg                    pslverr             
 );
-  // FSM state encoding for APB protocol
-  localparam IDLE   = 2'b00;
-  localparam SETUP  = 2'b01;
-  localparam ACCESS = 2'b10;
-  reg [1:0]  cur_state, next_state;
+
+  reg [1:0] cur_state, next_state;
 
   // FSM: State transition
   always @(posedge pclk or negedge preset_n) begin
-    if (!preset_n)
-      cur_state <= IDLE;
-    else
-      cur_state <= next_state;
+    if (!preset_n) cur_state <= `IDLE;
+    else           cur_state <= next_state;
   end
 
   // FSM: Next state logic
   always @(*) begin
     case (cur_state)
-      IDLE:    next_state = (psel && !penable) ? SETUP : IDLE;
-      SETUP:   next_state = (psel &&  penable) ? ACCESS : SETUP;
-      ACCESS:  next_state = IDLE;
-      default: next_state = IDLE;
+      `IDLE:   next_state = (psel && !penable) ? `SETUP : `IDLE;
+      `SETUP:  next_state = (psel &&  penable) ? `ACCESS : `SETUP;
+      `ACCESS: next_state = `IDLE;
+      default: next_state = `IDLE;
     endcase
   end
 
   // Output logic: pready and pslverr
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
-      pready  <= 1'b0;
-      pslverr <= 1'b0;
+      pready <= 1'b0; pslverr <= 1'b0;
     end else begin
-      // Default values every cycle
-      pready  <= 1'b0;
-      pslverr <= 1'b0;
-      if (cur_state == ACCESS) begin
+      if (cur_state == `ACCESS) begin
         pready  <= 1'b1;
         // Check for invalid address
         if (pwrite) begin
@@ -322,9 +333,17 @@ module APB_trans #(
           if (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR)
             pslverr <= 1'b1;
         end
+      end else begin
+        // Default values every cycle
+        pready <= 1'b0; pslverr <= 1'b0;
       end
     end
   end
+  
+  always @(*) begin
+    pcurrstate = cur_state;
+  end 
+ 
 endmodule
 
 `endif // RW_REG_CONTROL_V
