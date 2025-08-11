@@ -3,6 +3,6 @@
 
 - Phân biệt về việc dùng khai báo wire và reg
 ### TIMELINE
-#### Test RW_APB
+#### 1. Test RW_APB
 > https://edaplayground.com/x/njHu
-#### 
+#### 2. Test COUNTER_UNIT
