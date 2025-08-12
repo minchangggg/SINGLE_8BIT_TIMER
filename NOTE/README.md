@@ -8,8 +8,10 @@
 <img width="400" alt="image" src="https://github.com/user-attachments/assets/12ced262-2620-48fa-a937-6d580d2cfcde">
 <img width="400" alt="image" src="https://github.com/user-attachments/assets/f68eeae5-66e0-4f79-bccf-b4d8be92ecc5">
 
-### 1.2. Test_detect_cnt_edge => chưa OK
+### 1.2. Test_detect_cnt_edge => OK
 > https://edaplayground.com/x/akcc
+
+<img width="1873" height="304" alt="image" src="https://github.com/user-attachments/assets/25e7f094-0af5-4d91-ad0d-eff8933d5ba6" />
 
 ### 1.3. Test_counter_unit => chưa OK
 
