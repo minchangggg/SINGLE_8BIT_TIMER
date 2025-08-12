@@ -13,7 +13,7 @@
 
 <img width="1873" height="304" alt="image" src="https://github.com/user-attachments/assets/25e7f094-0af5-4d91-ad0d-eff8933d5ba6" />
 
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/e12778c4-fdb6-4cbe-ac87-311d132b4df5">
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/e12778c4-fdb6-4cbe-ac87-311d132b4df5">
 
 ### 1.3. Test_counter_unit => chưa OK
 
