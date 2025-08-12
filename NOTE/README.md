@@ -7,7 +7,9 @@
 <img width="400" alt="image" src="https://github.com/user-attachments/assets/12ced262-2620-48fa-a937-6d580d2cfcde">
 <img width="400" alt="image" src="https://github.com/user-attachments/assets/f68eeae5-66e0-4f79-bccf-b4d8be92ecc5">
 
-#### 2. Test_detect_cnt_edge
+#### 2. Test_detect_cnt_edge => chưa OK
+> https://edaplayground.com/x/akcc
+
 
 #### 3. Test_counter_unit
 
