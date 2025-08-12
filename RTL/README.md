@@ -76,7 +76,7 @@
   endmodule
   ```
 ### TIMELINE
-#### 1. Test RW_APB
+#### 1. Test_RW_APB_wait_state_final
 > https://edaplayground.com/x/cGnu
 
 <img width="1837" height="374" alt="image" src="https://github.com/user-attachments/assets/7c73c341-5de2-4b3a-98d6-d219aaa066c5" />
