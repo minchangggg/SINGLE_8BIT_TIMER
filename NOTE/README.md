@@ -22,6 +22,9 @@
 ### 1.1. Testcase 1,2,3,4,5 => chưa OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
+### 1.2. Testcase 20,21 => chưa OK
+<img width="1584" height="228" alt="image" src="https://github.com/user-attachments/assets/4aa803bb-8c78-4af0-a241-559aa0d4a8cc" />
+
 
 
 
