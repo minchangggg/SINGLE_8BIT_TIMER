@@ -1,4 +1,5 @@
-### TIMELINE
+## TIMELINE
+### Hoàn thành các test cơ bản để ktra RTL hoạt động đúng với thiết kế ko
 #### 1. Test_rw_reg_control_final => OK
 > https://edaplayground.com/x/cGnu
 
@@ -10,6 +11,12 @@
 #### 2. Test_detect_cnt_edge => chưa OK
 > https://edaplayground.com/x/akcc
 
-
 #### 3. Test_counter_unit
+
+#### 4. Test_ovf_udf
+
+#### 5. Test_logic_control
+
+### 
+
 
