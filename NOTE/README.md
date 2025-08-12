@@ -19,7 +19,7 @@
 
 --------------------------------------------------------------------------------------------------------------------------------------
 ## 2. Viết code cho testcase
-#### 1.1. Testcase 1,2,3,4,5 => chưa OK
+### 1.1. Testcase 1,2,3,4,5 => chưa OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
 
