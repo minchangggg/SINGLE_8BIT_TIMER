@@ -77,5 +77,5 @@
   ```
 ### TIMELINE
 #### 1. Test RW_APB
-> https://edaplayground.com/x/njHu
+> https://edaplayground.com/x/cGnu
 #### 2. Test COUNTER_UNIT
