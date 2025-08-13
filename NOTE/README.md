@@ -15,10 +15,12 @@
 
 <img width="700" alt="image" src="https://github.com/user-attachments/assets/e12778c4-fdb6-4cbe-ac87-311d132b4df5">
 
-### 1.3. Test_counter_unit => chưa OK
+### 1.3. Test_counter_unit => OK
 > https://edaplayground.com/x/etm8
 
 <img width="1898" height="363" alt="image" src="https://github.com/user-attachments/assets/5e204f78-900c-4672-8c0a-6fb333e29883" />
+
+> tmr_clk = pclk/4
 
 ### 1.4. Test_ovf_udf => chưa OK
 
