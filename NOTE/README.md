@@ -1,3 +1,8 @@
+# NOTE
+PẢI DÙNG **FALLING** EDGE CỦA TMR_Edge chứ ko pải Rising 
+
+
+
 # TIMELINE
 ## 1. Hoàn thành các test cơ bản để ktra RTL hoạt động đúng với thiết kế ko
 ### 1.1. Test_rw_reg_control_final => OK
@@ -20,7 +25,7 @@
 
 <img width="1898" height="363" alt="image" src="https://github.com/user-attachments/assets/5e204f78-900c-4672-8c0a-6fb333e29883" />
 
-> tmr_clk = pclk/4
+> tmr_clk = pclk/8
 
 ### 1.4. Test_ovf_udf => chưa OK
 
