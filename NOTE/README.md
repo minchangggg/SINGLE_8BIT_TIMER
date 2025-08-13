@@ -16,7 +16,9 @@
 <img width="700" alt="image" src="https://github.com/user-attachments/assets/e12778c4-fdb6-4cbe-ac87-311d132b4df5">
 
 ### 1.3. Test_counter_unit => chưa OK
-> https://edaplayground.com/x/mCGM
+> https://edaplayground.com/x/etm8
+
+<img width="1898" height="363" alt="image" src="https://github.com/user-attachments/assets/5e204f78-900c-4672-8c0a-6fb333e29883" />
 
 ### 1.4. Test_ovf_udf => chưa OK
 
