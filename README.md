@@ -6,7 +6,7 @@ A fully-synchronous 8-bit timer IP core with APB interface. Supports programmabl
 ## Block diagram
 A Timer Module in its most basic form is a digital logic circuit that counts up or counts down every clock cycle.
 
-<img width="1213" height="815" alt="image" src="https://github.com/user-attachments/assets/d181d54d-23d4-46a4-accb-d2dfd0a3d63b" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/d181d54d-23d4-46a4-accb-d2dfd0a3d63b">
 
 ## Register specification
 | Offset | Register Name        | Description                 | Bit Width | Access | Reset Value |
