@@ -30,12 +30,13 @@
 
 <img width="1904" height="306" alt="image" src="https://github.com/user-attachments/assets/22189632-4d4f-4e00-85a4-eb2d053fba94" />
 
+## 2. Hoàn chỉnh RTL
 --------------------------------------------------------------------------------------------------------------------------------------
-## 2. Viết code cho testcase
-### 1.1. Testcase 1,2,3,4,5 => chưa OK
+## 3. Viết code cho testcase
+### 3.1. Testcase 1,2,3,4,5 => chưa OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
-### 1.2. Testcase 20,21 => chưa OK
+### 3.2. Testcase 20,21 => chưa OK
 <img width="1747" height="230" alt="image" src="https://github.com/user-attachments/assets/1468e29e-d24c-4793-9e99-b860c2f903c9" />
 
 
