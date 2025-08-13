@@ -1,10 +1,12 @@
+// STATUS: OK
+
 `ifndef IP_TIMER_V
 `define IP_TIMER_V
 
 `include "reg_def.v"
 // `DATA_WIDTH = 8
-`include "rw_register.v"
-`include "detect_cnt_edge.v"
+`include "rw_reg_control.v"
+`include "pos_cnt_edge_detect.v"
 `include "logic_control.v"
 `include "cnt_unit.v"
 `include "ovf_udf_comp.v"
@@ -53,8 +55,8 @@ module ip_TIMER #(
   wire                   count_load;
   wire                   count_enable;
   wire                   count_up_down;
-  
   wire [1:0]             cks;
+  
   // Wire for clock edge from detect_cnt_edge module
   wire                   TMR_Edge;
   
@@ -66,9 +68,9 @@ module ip_TIMER #(
   // 1. APB READ/WRITE REGISTER CONTROLLER
   //   - This module acts as the interface to the APB bus and
   //     stores the values of the internal registers (TDR, TCR, TSR).
-  rw_reg_register #(
+  rw_reg_control #(
     .ADDR_WIDTH(ADDR_WIDTH)
-  ) u_rw_register (
+  ) u_rw_reg_control (
     .PCLK      (PCLK),
     .PRESETn   (PRESETn),
     .PSEL      (PSEL),
@@ -81,16 +83,16 @@ module ip_TIMER #(
     .PSLVERR   (PSLVERR),
     
     .TCNT      (TCNT_reg),      // Connects to the output of the counter unit
-    .TDR_reg   (TDR_reg),       // Outputs the internal TDR register value
-    .TCR_reg   (TCR_reg),       // Outputs the internal TCR register value
-    .TSR_reg   (TSR_reg)        // Outputs the internal TSR register value
+    .TDR       (TDR_reg),       // Outputs the internal TDR register value
+    .TCR       (TCR_reg),       // Outputs the internal TCR register value
+    .TSR       (TSR_reg)        // Outputs the internal TSR register value
   );
 
   // ══════════════════════════════════════════════════════════════════════════════════════════════
   // 2. CLOCK DIVIDER EDGE DETECTION LOGIC
   //   - This module selects the appropriate clock from CLK_IN based on
   //     the 'cks' signal and generates a single-cycle edge pulse.
-  detect_cnt_edge u_detect_cnt_edge (
+  pos_cnt_edge_detect u_pos_cnt_edge_detect (
     .pclk      (PCLK),
     .preset_n  (PRESETn),
     .CLK_IN    (CLK_IN),
@@ -104,16 +106,16 @@ module ip_TIMER #(
   //     and generates all the necessary control signals for other modules.
   logic_control u_logic_control (
     .TDR               (TDR_reg),
-    .TCR               (TCR_reg),
-    .TSR               (TSR_reg),
-    .TMR_OVF           (TMR_OVF_int),
-    .TMR_UDF           (TMR_UDF_int),
-    
+    .TCR               (TCR_reg),    
     .count_start_value (count_start_value),
     .count_load        (count_load),
     .count_enable      (count_enable),
     .count_up_down     (count_up_down),
-    .cks               (cks)
+    .cks               (cks),
+    
+    .TMR_OVF           (TMR_OVF_int),
+    .TMR_UDF           (TMR_UDF_int),
+    .TSR               (TSR_reg)
   );
 
   // ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -123,14 +125,14 @@ module ip_TIMER #(
   cnt_unit u_cnt_unit (
     .pclk              (PCLK),
     .preset_n          (PRESETn),
-    .TMR_Edge          (TMR_Edge),
     
+    .TMR_Edge          (TMR_Edge),
     .count_start_value (count_start_value),
     .count_load        (count_load),
     .count_enable      (count_enable),
     .count_up_down     (count_up_down),
     
-    .CNT               (TCNT_reg)
+    .TCNT               (TCNT_reg)
   );
 
   // ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -141,10 +143,9 @@ module ip_TIMER #(
     .pclk          (PCLK),
     .preset_n      (PRESETn),
     
+    .TCNT          (TCNT_reg),
     .count_enable  (count_enable),
     .count_up_down (count_up_down),
-    
-    .CNT           (TCNT_reg),
     
     .TMR_OVF       (TMR_OVF_int),
     .TMR_UDF       (TMR_UDF_int)
