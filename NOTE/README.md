@@ -1,7 +1,5 @@
 # NOTE
-PẢI DÙNG **FALLING** EDGE CỦA TMR_Edge chứ ko pải Rising 
-
-
+> DÙNG **Rising** EDGE CỦA TMR_Edge chứ ko pải FALLING như trong timming yc 
 
 # TIMELINE
 ## 1. Hoàn thành các test cơ bản để ktra RTL hoạt động đúng với thiết kế ko
