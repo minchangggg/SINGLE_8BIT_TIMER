@@ -9,7 +9,7 @@
 //   (null) and mixed addresses, as per the provided test plan.
 // -----------------------------------------------------------------------------
 
-module tb_IP_TIMER;
+module tb_ip_TIMER;
 
   // --- Parameters ---
   parameter PCLK_PERIOD = 10;
