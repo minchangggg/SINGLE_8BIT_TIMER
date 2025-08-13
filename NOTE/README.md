@@ -43,6 +43,8 @@
 ### 3.1. Testcase 1,2,3,4,5 => chưa OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
+<img width="1818" height="579" alt="image" src="https://github.com/user-attachments/assets/ca67700d-65b3-4f67-bb91-4c89228cc456" />
+
 > Kiểm tra Thanh ghi (Register Tests)
 - [ ] Testcase1 - tdr_test.v: Kiểm tra đọc và ghi vào thanh ghi TDR.
 - [ ] Testcase2 - tcr_test.v: Kiểm tra đọc và ghi vào thanh ghi TCR và xác minh các bit chức năng.
