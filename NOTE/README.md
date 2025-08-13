@@ -43,11 +43,11 @@
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
 > Kiểm tra Thanh ghi (Register Tests)
-- [ ] tdr_test.v: Kiểm tra đọc và ghi vào thanh ghi TDR.
-- [ ] tcr_test.v: Kiểm tra đọc và ghi vào thanh ghi TCR và xác minh các bit chức năng.
-- [ ] tsr_test.v: Kiểm tra đọc và ghi vào thanh ghi TSR và xác minh các cờ trạng thái.
-- [ ] null_address.v: Kiểm tra ghi vào một địa chỉ không tồn tại và xác minh lỗi PSLVERR.
-- [ ] mixed_address.v: Kiểm tra truy cập đồng thời vào nhiều địa chỉ khác nhau.
+- [ ] Testcase1 - tdr_test.v: Kiểm tra đọc và ghi vào thanh ghi TDR.
+- [ ] Testcase2 - tcr_test.v: Kiểm tra đọc và ghi vào thanh ghi TCR và xác minh các bit chức năng.
+- [ ] Testcase3 - tsr_test.v: Kiểm tra đọc và ghi vào thanh ghi TSR và xác minh các cờ trạng thái.
+- [ ] Testcase4 - null_address.v: Kiểm tra ghi vào một địa chỉ không tồn tại và xác minh lỗi PSLVERR.
+- [ ] Testcase5 - mixed_address.v: Kiểm tra truy cập đồng thời vào nhiều địa chỉ khác nhau.
 
 ### 3.2. Testcase 20,21 => chưa OK
 <img width="1747" height="230" alt="image" src="https://github.com/user-attachments/assets/1468e29e-d24c-4793-9e99-b860c2f903c9" />
