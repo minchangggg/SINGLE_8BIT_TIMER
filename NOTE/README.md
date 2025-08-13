@@ -25,9 +25,10 @@
 
 > tmr_clk = pclk/8
 
-### 1.4. Test_ovf_udf => chưa OK
+### 1.4. Test_ovf_udf => OK
+> https://edaplayground.com/x/FBu8
 
-### 1.5. Test_logic_control => chưa OK
+<img width="1904" height="306" alt="image" src="https://github.com/user-attachments/assets/22189632-4d4f-4e00-85a4-eb2d053fba94" />
 
 --------------------------------------------------------------------------------------------------------------------------------------
 ## 2. Viết code cho testcase
