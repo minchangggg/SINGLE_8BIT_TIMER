@@ -1,3 +1,5 @@
+// STATUS: OK
+
 `ifndef OVF_UDF_COMP_V
 `define OVF_UDF_COMP_V
 
@@ -50,10 +52,6 @@ module ovf_udf_comp (
       TMR_UDF  <= 1'b0;
       TCNT_d   <= {`DATA_WIDTH{1'b0}};
     end else begin
-//       // Clear flags if requested
-//       TMR_OVF <= (clr_ovf) ? 1'b0 : TMR_OVF;
-//       TMR_UDF <= (clr_udf) ? 1'b0 : TMR_UDF; 
-      
       // Detect overflow/underflow only if enabled
       if (count_enable) begin
       // Check counting direction
@@ -85,6 +83,7 @@ module ovf_udf_comp (
       
       // Save current value
       TCNT_d <= TCNT;
+    end
   end
 
 endmodule
