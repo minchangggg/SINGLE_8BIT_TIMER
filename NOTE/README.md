@@ -2,7 +2,7 @@
 > DÙNG **Rising** EDGE CỦA TMR_Edge chứ ko pải FALLING như trong timming yc 
 
 # TIMELINE
-## 1. Hoàn thành các test cơ bản để ktra RTL hoạt động đúng với thiết kế ko
+## 1. Hoàn thành các test cơ bản để ktra RTL hoạt động đúng với thiết kế ko => OK
 ### 1.1. Test_rw_reg_control_final => OK
 > https://edaplayground.com/x/cGnu
 
@@ -30,14 +30,30 @@
 
 <img width="1904" height="306" alt="image" src="https://github.com/user-attachments/assets/22189632-4d4f-4e00-85a4-eb2d053fba94" />
 
-## 2. Hoàn chỉnh RTL
 --------------------------------------------------------------------------------------------------------------------------------------
-## 3. Viết code cho testcase
+
+## 2. Hoàn chỉnh RTL
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+## 3. Viết code cho Testcase theo Test Plan
+> https://1drv.ms/x/c/bf59f56abe5fcd4f/Eds4H4kc0WpNjWQHSV2JZrMBLutPPjJqdwPW6FP6gh2HKA?e=6qRTJV
+
 ### 3.1. Testcase 1,2,3,4,5 => chưa OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
+> Kiểm tra Thanh ghi (Register Tests)
+- [ ] tdr_test.v: Kiểm tra đọc và ghi vào thanh ghi TDR.
+- [ ] tcr_test.v: Kiểm tra đọc và ghi vào thanh ghi TCR và xác minh các bit chức năng.
+- [ ] tsr_test.v: Kiểm tra đọc và ghi vào thanh ghi TSR và xác minh các cờ trạng thái.
+- [ ] null_address.v: Kiểm tra ghi vào một địa chỉ không tồn tại và xác minh lỗi PSLVERR.
+- [ ] mixed_address.v: Kiểm tra truy cập đồng thời vào nhiều địa chỉ khác nhau.
+
 ### 3.2. Testcase 20,21 => chưa OK
 <img width="1747" height="230" alt="image" src="https://github.com/user-attachments/assets/1468e29e-d24c-4793-9e99-b860c2f903c9" />
+
+### 3.3. Testcase 6,7,8,9 => chưa OK
+<img width="1709" height="621" alt="image" src="https://github.com/user-attachments/assets/e965e9e9-469d-4971-8f57-232f59d90ac3" />
 
 
 
