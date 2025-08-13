@@ -1,10 +1,7 @@
+// STATUS: OK
+
 `ifndef RW_REG_CONTROL_V
 `define RW_REG_CONTROL_V
-
-// FSM state encoding for APB protocol
-`define IDLE   2'b00
-`define SETUP  2'b01
-`define ACCESS 2'b10
 
 `include "reg_def.v"
 // `DATA_WIDTH = 8
@@ -35,9 +32,8 @@
 //   - PREADY        : APB ready signal, high when a transfer is complete.
 //   - PSLVERR       : APB slave error signal, high for an invalid address.
 //   - TDR           : Internal Timer Data Register value.
-//   - TCR           : Internal Timer Control Register value.
-//   - TSR           : Internal Timer Status Register value.
 // -----------------------------------------------------------------------------
+
 module rw_reg_control #(
   parameter ADDR_WIDTH = 8
 )(
@@ -65,7 +61,6 @@ module rw_reg_control #(
   reg [`DATA_WIDTH-1:0] reg_TSR;
 
   // Internal wires for connecting sub-modules
-  wire [1:0] 			 apb_pcurrstate;  
   wire        			 apb_pready;	  
   wire      			 apb_pslverr;	  
   wire [`DATA_WIDTH-1:0] read_prdata; // Internal wire to connect read logic output to top-level PRDATA
@@ -87,7 +82,6 @@ module rw_reg_control #(
     .pwrite    (PWRITE),
     .paddr     (PADDR),
     // output
-    .pcurrstate(apb_pcurrstate),
     .pready    (apb_pready),
     .pslverr   (apb_pslverr)
   );
@@ -100,12 +94,10 @@ module rw_reg_control #(
     // input
     .pclk      (PCLK),
     .preset_n  (PRESETn),
-    .psel      (PSEL),
-    .penable   (PENABLE),
+    .pready    (apb_pready),
     .pwrite    (PWRITE),
     .paddr     (PADDR),
     .pwdata    (PWDATA),
-    .pcurrstate(apb_pcurrstate),
     // output
     .TDR       (reg_TDR),
     .TCR       (reg_TCR),
@@ -121,15 +113,12 @@ module rw_reg_control #(
     .pclk      (PCLK),
     .preset_n  (PRESETn),
     .pready    (apb_pready),
-    .psel      (PSEL),
-    .penable   (PENABLE),
     .pwrite    (PWRITE),
     .paddr     (PADDR),
     .TDR       (reg_TDR),
     .TCR       (reg_TCR),
     .TSR       (reg_TSR),
     .TCNT      (TCNT),
-    .pcurrstate(apb_pcurrstate),
     // output
     .prdata    (read_prdata)
   );
@@ -157,21 +146,18 @@ module rw_read_logic #(
   input  wire                   pclk,
   input  wire                   preset_n,
   input  wire                   pready,
-  input  wire                   psel,
-  input  wire                   penable,
   input  wire                   pwrite,
   input  wire [ADDR_WIDTH-1:0]  paddr,
   input  wire [`DATA_WIDTH-1:0] TDR,
   input  wire [`DATA_WIDTH-1:0] TCR,
   input  wire [`DATA_WIDTH-1:0] TSR,
   input  wire [`DATA_WIDTH-1:0] TCNT,
-  input  wire [1:0]             pcurrstate,
   
   output reg  [`DATA_WIDTH-1:0] prdata
 );
 
   wire read_en;
-  assign read_en = (pcurrstate == `ACCESS) & !pwrite;
+  assign read_en = pready & !pwrite;
 
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
@@ -201,12 +187,10 @@ module rw_write_logic #(
 )(
   input  wire                   pclk,
   input  wire                   preset_n,
-  input  wire                   psel,
-  input  wire                   penable,
+  input  wire                   pready,	
   input  wire                   pwrite,
   input  wire [ADDR_WIDTH-1:0]  paddr,
   input  wire [`DATA_WIDTH-1:0] pwdata,
-  input  wire [1:0]             pcurrstate,
   
   output reg  [`DATA_WIDTH-1:0] TDR,
   output reg  [`DATA_WIDTH-1:0] TCR,
@@ -220,7 +204,7 @@ module rw_write_logic #(
     				 (paddr == `TSR_ADDR) ? 3'b100 : 3'b000;
     
   // The `|w_reg_sel` check ensures that there is a selected reg for writing.
-  assign write_en = (pcurrstate == `ACCESS) & pwrite & |w_reg_sel;
+  assign write_en = pready & pwrite & |w_reg_sel;
 
   // Logic to handle reserved bits before writing to registers
   wire [`DATA_WIDTH-1:0] wdata_tdr;
@@ -257,57 +241,49 @@ module APB_trans #(
   parameter ADDR_WIDTH = 8
 )(
   // SIGNAL FOR APB INTERFACE
-  input  wire                   pclk,
-  input  wire                   preset_n,
-  input  wire                   psel,
-  input  wire                   penable,
-  input  wire                   pwrite,
-  input  wire [ADDR_WIDTH-1:0]  paddr,
+  input  wire                  pclk,
+  input  wire                  preset_n,
+  input  wire                  psel,
+  input  wire                  penable,
+  input  wire                  pwrite,
+  input  wire [ADDR_WIDTH-1:0] paddr,
   
-  output reg [1:0]              pcurrstate,
-  output reg                    pready,
-  output reg                    pslverr             
+  output reg                   pready,
+  output reg                   pslverr             
 );
-
-  reg [1:0] cur_state, next_state;
-  wire      invalid_addr;
+  // FSM state encoding
+  localparam IDLE = 2'b00, SETUP = 2'b01, ACCESS = 2'b10;
+  reg [1:0]  cur_state, next_state;
+  wire       invalid_addr;
   
   // Invalid address detection logic
-  assign invalid_addr = pwrite ?
-      				    (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR) :
-      				    (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR);
+  assign invalid_addr = pwrite ? (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR) 
+                               : (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR);
 
   // FSM: State transition
   always @(posedge pclk or negedge preset_n) begin
-    if (!preset_n) cur_state <= `IDLE;
+    if (!preset_n) cur_state <= IDLE;
     else           cur_state <= next_state;
   end
 
   // FSM: Next state logic
   always @(*) begin
     case (cur_state)
-      `IDLE:   next_state = (psel && !penable) ? `SETUP : `IDLE;
-      `SETUP:  next_state = (psel &&  penable) ? `ACCESS : `SETUP;
-      `ACCESS: next_state = `IDLE;
-      default: next_state = `IDLE;
+      IDLE:   next_state = (psel && !penable) ? SETUP  : IDLE;
+      SETUP:  next_state = (psel &&  penable) ? ACCESS : SETUP;
+      ACCESS: next_state = IDLE;
+      default: next_state = IDLE;
     endcase
   end
   
   // Output logic: pready and pslverr
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
-      pready <= 1'b0; 
-      pslverr <= 1'b0;
-      pcurrstate <= `IDLE;
+      pready    <= 1'b0; 
+      pslverr   <= 1'b0;
     end else begin
-      pcurrstate <= cur_state;
-      if (cur_state == `ACCESS) begin
-        pready  <= 1'b1;
-        pslverr <= invalid_addr;
-      end else begin
-        pready <= 1'b0; 
-        pslverr <= 1'b0;
-      end
+      pready  <= (cur_state == SETUP) && (next_state == ACCESS);
+      pslverr <= (cur_state == SETUP) && (next_state == ACCESS) & invalid_addr;
     end
   end
  
