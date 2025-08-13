@@ -1,3 +1,5 @@
+// STATUS: OK
+
 `ifndef CNT_UNIT_V
 `define CNT_UNIT_V
 
@@ -42,26 +44,27 @@ module cnt_unit (
   output reg  [`DATA_WIDTH-1:0] TCNT               // Current count value
 );  
 
-  always @(posedge pclk or negedge preset_n) begin
+  always @(posedge TMR_Edge or negedge preset_n) begin
     if (!preset_n) begin
-      TCNT <= `TCNT_RST;  // Reset counter to default value
-    end
-    else if (count_load) begin
-      TCNT <= count_start_value; 
-    end
-    else if (count_enable && TMR_Edge) begin
-      if (!count_up_down) begin
-        // Up count: wrap to 0 when max
-        TCNT <= (TCNT == {`DATA_WIDTH{1'b1}}) ? {`DATA_WIDTH{1'b0}} : TCNT + 1'b1;
+      TCNT <= `TCNT_RST; // Reset counter to default value
+    end else begin
+      if (count_load) begin
+        TCNT <= count_start_value; 
       end else begin
-        // Down count: wrap to max when 0
-        TCNT <= (TCNT == {`DATA_WIDTH{1'b0}}) ? {`DATA_WIDTH{1'b1}} : TCNT - 1'b1;
+        if (count_enable) begin
+          if (!count_up_down) 
+            // Up count: wrap to 0 when max
+            TCNT <= (TCNT == {`DATA_WIDTH{1'b1}}) ? {`DATA_WIDTH{1'b0}} : TCNT + 1'b1;
+          else                
+            // Down count: wrap to max when 0
+            TCNT <= (TCNT == {`DATA_WIDTH{1'b0}}) ? {`DATA_WIDTH{1'b1}} : TCNT - 1'b1;
+        end else begin   
+          // Hold current value
+          TCNT <= TCNT;  
+        end
       end
     end
-    else begin
-      TCNT <= TCNT;  // Hold current value
-    end
   end
-
+  
 endmodule
 `endif // CNT_UNIT_V
