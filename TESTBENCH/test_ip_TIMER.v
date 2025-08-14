@@ -1,12 +1,14 @@
 `timescale 1ns / 1ps
 `include "reg_def.v"
+`include "cnt_clk_in_gen.v"
+`include "APB_trans_bus.v"
 
 // -----------------------------------------------------------------------------
 // Module: tb_ip_TIMER
 // Description:
-//   This testbench verifies the read/write functionality of the TDR, TCR, and
-//   TSR registers, and also checks for correct error handling with non-existent
-//   (null) and mixed addresses, as per the provided test plan.
+//    This testbench verifies the read/write functionality of the TDR, TCR, and
+//    TSR registers, and also checks for correct error handling with non-existent
+//    (null) and mixed addresses, as per the provided test plan.
 // -----------------------------------------------------------------------------
 
 module tb_ip_TIMER;
@@ -16,147 +18,96 @@ module tb_ip_TIMER;
   parameter ADDR_WIDTH  = 8;
   
   // --- Testbench Signals (DUT inputs) ---
-  reg                    PCLK;
-  reg                    PRESETn;
-  reg  [3:0]             CLK_IN;
-  reg                    PSEL;
-  reg                    PENABLE;
-  reg                    PWRITE;
-  reg  [ADDR_WIDTH-1:0]  PADDR;
-  reg  [`DATA_WIDTH-1:0] PWDATA;
+  reg                   PCLK;
+  reg                   PRESETn;
+  // These signals are now declared as wires because they are driven by other modules/tasks.
+  wire  [3:0]           CLK_IN;
+  wire                  PSEL;
+  wire                  PENABLE;
+  wire                  PWRITE;
+  wire  [ADDR_WIDTH-1:0] PADDR;
+  wire  [`DATA_WIDTH-1:0] PWDATA;
   
   // --- Testbench Wires (DUT outputs) ---
   wire [`DATA_WIDTH-1:0] PRDATA;
-  wire                   PREADY;
-  wire                   PSLVERR;
-  wire                   TMR_OVF;
-  wire                   TMR_UDF;
+  wire                  PREADY;
+  wire                  PSLVERR;
+  wire                  TMR_OVF;
+  wire                  TMR_UDF;
 
   // --- Local variables for test stimulus ---
   reg [`DATA_WIDTH-1:0] data_read;
   reg [`DATA_WIDTH-1:0] random_value;
   
+  // --- Instantiate sys_signal module ---
+  cnt_clk_in_gen u_cnt_clk_in_gen (
+    .PCLK    (PCLK),
+    .PRESETn (PRESETn),
+    .CLK_IN  (CLK_IN)
+  );
+  
+  // --- Instantiate APB_trans_bus module ---
+  APB_trans_bus #(
+    .ADDR_WIDTH(ADDR_WIDTH)
+  ) u_APB_trans_bus (
+    .PCLK    (PCLK),
+    .PRESETn (PRESETn),
+    .PSEL    (PSEL),
+    .PENABLE (PENABLE),
+    .PWRITE  (PWRITE),
+    .PADDR   (PADDR),
+    .PWDATA  (PWDATA),
+    .PRDATA  (PRDATA),
+    .PREADY  (PREADY),
+    .PSLVERR (PSLVERR)
+  );
+  
   // --- Instantiate the Device Under Test (DUT) ---
   ip_TIMER #(
     .ADDR_WIDTH(ADDR_WIDTH)
   ) u_ip_timer (
-    .CLK_IN    (CLK_IN),
-    .PCLK      (PCLK),
-    .PRESETn   (PRESETn),
-    .PSEL      (PSEL),
-    .PENABLE   (PENABLE),
-    .PWRITE    (PWRITE),
-    .PADDR     (PADDR),
-    .PWDATA    (PWDATA),
-    .PRDATA    (PRDATA),
-    .PREADY    (PREADY),
-    .PSLVERR   (PSLVERR),
-    .TMR_OVF   (TMR_OVF),
-    .TMR_UDF   (TMR_UDF)
+    .CLK_IN  (CLK_IN),
+    .PCLK    (PCLK),
+    .PRESETn (PRESETn),
+    .PSEL    (PSEL),
+    .PENABLE (PENABLE),
+    .PWRITE  (PWRITE),
+    .PADDR   (PADDR),
+    .PWDATA  (PWDATA),
+    .PRDATA  (PRDATA),
+    .PREADY  (PREADY),
+    .PSLVERR (PSLVERR),
+    .TMR_OVF (TMR_OVF),
+    .TMR_UDF (TMR_UDF)
   );
-
+  
   // ------------------------------------------
-  // 1. Clock Generation - PCLK
+  // Clock PCLK + Reset PRESETn Generation
   // ------------------------------------------
   initial begin
     PCLK = 1'b0;
     forever #(PCLK_PERIOD/2) PCLK = ~PCLK;
   end
   
-  // ------------------------------------------
-  // 2. Divided Clock Generation
-  // ------------------------------------------
-  reg pclk_div2, pclk_div4, pclk_div8, pclk_div16;
   initial begin
-    pclk_div2  = 1'b0;
-    pclk_div4  = 1'b0;
-    pclk_div8  = 1'b0;
-    pclk_div16 = 1'b0;
+    PRESETn = 1'b0;
+    #(PCLK_PERIOD*2); PRESETn = 1'b1;
   end
-
-  always @(posedge PCLK)      pclk_div2  <= ~pclk_div2;
-  always @(posedge pclk_div2) pclk_div4  <= ~pclk_div4;
-  always @(posedge pclk_div4) pclk_div8  <= ~pclk_div8;
-  always @(posedge pclk_div8) pclk_div16 <= ~pclk_div16;
-  
-  assign CLK_IN = {pclk_div16, pclk_div8, pclk_div4, pclk_div2};
   
   // ------------------------------------------
-  // 3. APB Transaction Tasks
-  // ------------------------------------------
-
-  // APB write task
-  task apb_write (
-    input [ADDR_WIDTH-1:0] addr, 
-    input [`DATA_WIDTH-1:0] data
-  );
-    begin
-      @(posedge PCLK);
-      // Setup phase
-      PADDR   = addr;
-      PWDATA  = data;
-      PWRITE  = 1'b1;
-      PSEL    = 1'b1;
-      PENABLE = 1'b0;
-
-      @(posedge PCLK);
-      // Access phase
-      PENABLE = 1'b1;
-      wait (PREADY);
-
-      @(posedge PCLK); 
-      // End transaction
-      $display("WRITE  addr=0x%02h data=0x%02h pready=%b pslverr=%b", 
-               addr, data, PREADY, PSLVERR);
-      PSEL    = 1'b0;
-      PENABLE = 1'b0;
-    end
-  endtask
-
-  // APB read task with output data
-  task apb_read (
-    input [ADDR_WIDTH-1:0] addr,
-    output [`DATA_WIDTH-1:0] data_out
-  );
-    begin
-      @(posedge PCLK);
-      // Setup phase
-      PADDR   = addr;
-      PWRITE  = 1'b0;
-      PSEL    = 1'b1;
-      PENABLE = 1'b0;
-
-      @(posedge PCLK);
-      // Access phase
-      PENABLE = 1'b1;
-      wait (PREADY);
-      data_out = PRDATA; // Assign PRDATA to the output variable
-
-      @(posedge PCLK);
-      // End transaction
-      $display("READ   addr=0x%02h data=0x%02h pready=%b pslverr=%b", 
-               addr, data_out, PREADY, PSLVERR);
-      PSEL    = 1'b0;
-      PENABLE = 1'b0;
-    end
-  endtask
-  
-  // ------------------------------------------
-  // 4. Test Stimulus
+  // Test Stimulus
   // ------------------------------------------
   initial begin
     $dumpfile("tb_ip_TIMER.vcd");
     $dumpvars(0, tb_ip_TIMER);
 
-    // Initial values
-    PSEL = 1'b0; PENABLE = 1'b0; PWRITE = 1'b0;
-    PADDR = 8'h00; PWDATA = 8'h00;
-    data_read    = {`DATA_WIDTH{1'b0}}; 	
-    random_value = {`DATA_WIDTH{1'b0}};	
+    // Initial values. Note: APB signals are not driven here anymore.
+    data_read    = {`DATA_WIDTH{1'b0}};  
+    random_value = {`DATA_WIDTH{1'b0}}; 
     
     // Reset
     PRESETn = 1'b0;
-    repeat (2) @(posedge PCLK); PRESETn = 1'b1;
+    wait (PRESETn);
     $display("Time = %0t: Complete Reset, Start run testcase.", $time);
     
     // =======================================================================
@@ -166,7 +117,7 @@ module tb_ip_TIMER;
     $display("Test Case 1: TDR test (read/write)");
     
     // 1. Read TDR to check its default value
-    apb_read(`TDR_ADDR, data_read);
+    u_APB_trans_bus.apb_read(`TDR_ADDR, data_read);
     if (data_read == `TDR_RST) begin
       $display("TC_1-1 PASSED: Giá trị mặc định của TDR là đúng: 8'h%h.", data_read);
     end else begin
@@ -176,8 +127,8 @@ module tb_ip_TIMER;
     // 2. and 3. Write/read random value to TDR, repeat 20 times
     repeat (20) begin
       random_value = $urandom_range(255, 0);
-      apb_write(`TDR_ADDR, random_value);
-      apb_read(`TDR_ADDR, data_read);
+      u_APB_trans_bus.apb_write(`TDR_ADDR, random_value);
+      u_APB_trans_bus.apb_read(`TDR_ADDR, data_read);
       if (data_read == random_value) begin
         $display("TC_1-2 PASSED: TDR đọc lại đúng giá trị đã ghi 8'h%h.", random_value);
       end else begin
@@ -192,7 +143,7 @@ module tb_ip_TIMER;
     $display("Test Case 2: TCR test (read/write) with mask");
 
     // 1. Read TCR to check its default value
-    apb_read(`TCR_ADDR, data_read);
+    u_APB_trans_bus.apb_read(`TCR_ADDR, data_read);
     if (data_read == `TCR_RST) begin
       $display("TC_2-1 PASSED: Giá trị mặc định của TCR là đúng: 8'h%h.", data_read);
     end else begin
@@ -202,8 +153,8 @@ module tb_ip_TIMER;
     // 2. and 3. Write/read random value to TCR, repeat 20 times
     repeat (20) begin
       random_value = $urandom_range(255, 0);
-      apb_write(`TCR_ADDR, random_value);
-      apb_read(`TCR_ADDR, data_read);
+      u_APB_trans_bus.apb_write(`TCR_ADDR, random_value);
+      u_APB_trans_bus.apb_read(`TCR_ADDR, data_read);
       
       // Compare with the written value after applying mask 1011_0011 (8'hB3)
       if ((data_read & 8'hB3) == (random_value & 8'hB3)) begin
@@ -220,7 +171,7 @@ module tb_ip_TIMER;
     $display("Test Case 3: TSR test (read/write)");
     
     // 1. Read TSR to check its default value
-    apb_read(`TSR_ADDR, data_read);
+    u_APB_trans_bus.apb_read(`TSR_ADDR, data_read);
     if (data_read == `TSR_RST) begin
       $display("TC_3-1 PASSED: Giá trị mặc định của TSR là đúng: 8'h%h.", data_read);
     end else begin
@@ -230,8 +181,8 @@ module tb_ip_TIMER;
     // 2. and 3. Write/read random value to TSR, repeat 20 times
     repeat (20) begin
       random_value = $urandom_range(255, 0);
-      apb_write(`TSR_ADDR, random_value);
-      apb_read(`TSR_ADDR, data_read);
+      u_APB_trans_bus.apb_write(`TSR_ADDR, random_value);
+      u_APB_trans_bus.apb_read(`TSR_ADDR, data_read);
       
       // The writable bits of TSR are assumed to be TMR_UDF (bit 1) and TMR_OVF (bit 0).
       // Writing to them should clear the flags, so the read value should be 0.
@@ -260,7 +211,7 @@ module tb_ip_TIMER;
       end while ((null_addr == `TDR_ADDR) || (null_addr == `TCR_ADDR) || (null_addr == `TSR_ADDR));
       
       random_value = $urandom_range(255, 0);
-      apb_write(null_addr, random_value);
+      u_APB_trans_bus.apb_write(null_addr, random_value);
       
       // Check for PSLVERR and that PRDATA is 0
       if (PSLVERR == 1'b1) begin
@@ -292,10 +243,10 @@ module tb_ip_TIMER;
       is_valid_addr = ((mixed_addr == `TDR_ADDR) || (mixed_addr == `TCR_ADDR) || (mixed_addr == `TSR_ADDR));
       
       random_value = $urandom_range(255, 0);
-      apb_write(mixed_addr, random_value);
+      u_APB_trans_bus.apb_write(mixed_addr, random_value);
       
       // Read back the value
-      apb_read(mixed_addr, data_read);
+      u_APB_trans_bus.apb_read(mixed_addr, data_read);
       
       if (is_valid_addr) begin
         // Case: Valid address
