@@ -40,7 +40,7 @@
 ## 3. Viết code cho Testcase theo Test Plan
 > https://1drv.ms/x/c/bf59f56abe5fcd4f/Eds4H4kc0WpNjWQHSV2JZrMBLutPPjJqdwPW6FP6gh2HKA?e=6qRTJV
 
-### 3.1. Testcase 1,2,3,4,5 => chưa OK
+### 3.1. Testcase 1,2,3,4,5 => OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
 <img width="1818" height="579" alt="image" src="https://github.com/user-attachments/assets/ca67700d-65b3-4f67-bb91-4c89228cc456" />
@@ -52,6 +52,8 @@
 - [ ] Testcase3 - tsr_test.v: Kiểm tra đọc và ghi vào thanh ghi TSR và xác minh các cờ trạng thái.
 - [ ] Testcase4 - null_address.v: Kiểm tra ghi vào một địa chỉ không tồn tại và xác minh lỗi PSLVERR.
 - [ ] Testcase5 - mixed_address.v: Kiểm tra truy cập đồng thời vào nhiều địa chỉ khác nhau.
+
+<img width="1907" height="580" alt="image" src="https://github.com/user-attachments/assets/a42e2e09-bc2e-4ef7-896f-dc215b9719b5" />
 
 ### 3.2. Testcase 20,21 => chưa OK
 <img width="1747" height="230" alt="image" src="https://github.com/user-attachments/assets/1468e29e-d24c-4793-9e99-b860c2f903c9" />
