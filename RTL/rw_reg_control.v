@@ -215,8 +215,8 @@ module rw_write_logic #(
   wire [`DATA_WIDTH-1:0] wdata_tsr;
   
   assign wdata_tdr = pwdata;
-  assign wdata_tcr = {pwdata[7], 1'b0, pwdata[5:4], 2'b00, pwdata[1:0]};
-  assign wdata_tsr = {6'b00, pwdata[1:0]};
+  assign wdata_tcr = pwdata & `TCR_WRITE_MASK; // {pwdata[7], 1'b0, pwdata[5:4], 2'b00, pwdata[1:0]};
+  assign wdata_tsr = pwdata & `TSR_WRITE_MASK; // {6'b00, pwdata[1:0]};
 
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
