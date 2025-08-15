@@ -43,17 +43,18 @@
 ### 3.1. Testcase 1,2,3,4,5 => OK
 <img width="1746" height="542" alt="image" src="https://github.com/user-attachments/assets/a72eee28-3e88-4e19-978c-b1a449f8806c" />
 
-<img width="1818" height="579" alt="image" src="https://github.com/user-attachments/assets/ca67700d-65b3-4f67-bb91-4c89228cc456" />
-
 [Kiểm tra Thanh ghi (Register Tests)]
 
-- [ ] Testcase1 - tdr_test.v: Kiểm tra đọc và ghi vào thanh ghi TDR.
-- [ ] Testcase2 - tcr_test.v: Kiểm tra đọc và ghi vào thanh ghi TCR và xác minh các bit chức năng.
-- [ ] Testcase3 - tsr_test.v: Kiểm tra đọc và ghi vào thanh ghi TSR và xác minh các cờ trạng thái.
-- [ ] Testcase4 - null_address.v: Kiểm tra ghi vào một địa chỉ không tồn tại và xác minh lỗi PSLVERR.
-- [ ] Testcase5 - mixed_address.v: Kiểm tra truy cập đồng thời vào nhiều địa chỉ khác nhau.
+- [x] Testcase1 - tdr_test.v: Kiểm tra đọc và ghi vào thanh ghi TDR.
+- [x] Testcase2 - tcr_test.v: Kiểm tra đọc và ghi vào thanh ghi TCR và xác minh các bit chức năng.
+- [x] Testcase3 - tsr_test.v: Kiểm tra đọc và ghi vào thanh ghi TSR và xác minh các cờ trạng thái.
+- [x] Testcase4 - tsr_test.v: Kiểm tra đọc vào thanh ghi TCNT.
+- [x] Testcase5 - null_address.v: Kiểm tra ghi vào một địa chỉ không tồn tại và xác minh lỗi PSLVERR.
+- [x] Testcase6 - mixed_address.v: Kiểm tra truy cập đồng thời vào nhiều địa chỉ khác nhau.
 
-<img width="1907" height="580" alt="image" src="https://github.com/user-attachments/assets/a42e2e09-bc2e-4ef7-896f-dc215b9719b5" />
+<img width="1413" height="726" alt="image" src="https://github.com/user-attachments/assets/1c8b492b-a47f-4372-97ce-997b717206bb" />
+
+<img width="1858" height="465" alt="image" src="https://github.com/user-attachments/assets/a688dc1b-c65c-4746-9a57-f2c39b17f185" />
 
 ### 3.2. Testcase 20,21 => chưa OK
 <img width="1747" height="230" alt="image" src="https://github.com/user-attachments/assets/1468e29e-d24c-4793-9e99-b860c2f903c9" />
