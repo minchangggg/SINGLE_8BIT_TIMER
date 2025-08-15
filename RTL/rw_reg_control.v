@@ -61,6 +61,7 @@ module rw_reg_control #(
   reg [`DATA_WIDTH-1:0] reg_TSR;
 
   // Internal wires for connecting sub-modules
+  wire                   apb_flag;
   wire        			 apb_pready;	  
   wire      			 apb_pslverr;	  
   wire [`DATA_WIDTH-1:0] read_prdata; // Internal wire to connect read logic output to top-level PRDATA
@@ -82,6 +83,7 @@ module rw_reg_control #(
     .pwrite    (PWRITE),
     .paddr     (PADDR),
     // output
+    .flag      (apb_flag),
     .pready    (apb_pready),
     .pslverr   (apb_pslverr)
   );
@@ -94,7 +96,7 @@ module rw_reg_control #(
     // input
     .pclk      (PCLK),
     .preset_n  (PRESETn),
-    .pready    (apb_pready),
+    .flag      (apb_flag),
     .pwrite    (PWRITE),
     .paddr     (PADDR),
     .pwdata    (PWDATA),
@@ -112,7 +114,7 @@ module rw_reg_control #(
     // input
     .pclk      (PCLK),
     .preset_n  (PRESETn),
-    .pready    (apb_pready),
+    .flag      (apb_flag),
     .pwrite    (PWRITE),
     .paddr     (PADDR),
     .TDR       (reg_TDR),
@@ -145,9 +147,10 @@ module rw_read_logic #(
 )(
   input  wire                   pclk,
   input  wire                   preset_n,
-  input  wire                   pready,
+  input  wire                   flag,	
   input  wire                   pwrite,
   input  wire [ADDR_WIDTH-1:0]  paddr,
+  
   input  wire [`DATA_WIDTH-1:0] TDR,
   input  wire [`DATA_WIDTH-1:0] TCR,
   input  wire [`DATA_WIDTH-1:0] TSR,
@@ -157,7 +160,7 @@ module rw_read_logic #(
 );
 
   wire read_en;
-  assign read_en = pready & !pwrite;
+  assign read_en = flag & !pwrite;
 
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
@@ -187,7 +190,7 @@ module rw_write_logic #(
 )(
   input  wire                   pclk,
   input  wire                   preset_n,
-  input  wire                   pready,	
+  input  wire                   flag,	
   input  wire                   pwrite,
   input  wire [ADDR_WIDTH-1:0]  paddr,
   input  wire [`DATA_WIDTH-1:0] pwdata,
@@ -204,7 +207,7 @@ module rw_write_logic #(
     				 (paddr == `TSR_ADDR) ? 3'b100 : 3'b000;
     
   // The `|w_reg_sel` check ensures that there is a selected reg for writing.
-  assign write_en = pready & pwrite & |w_reg_sel;
+  assign write_en = flag & pwrite & |w_reg_sel;
 
   // Logic to handle reserved bits before writing to registers
   wire [`DATA_WIDTH-1:0] wdata_tdr;
@@ -248,17 +251,16 @@ module APB_trans #(
   input  wire                  pwrite,
   input  wire [ADDR_WIDTH-1:0] paddr,
   
+  output wire                  flag,              
   output reg                   pready,
   output reg                   pslverr             
 );
+  
   // FSM state encoding
   localparam IDLE = 2'b00, SETUP = 2'b01, ACCESS = 2'b10;
   reg [1:0]  cur_state, next_state;
+  wire       flag_init;
   wire       invalid_addr;
-  
-  // Invalid address detection logic
-  assign invalid_addr = pwrite ? (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR) 
-                               : (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR);
 
   // FSM: State transition
   always @(posedge pclk or negedge preset_n) begin
@@ -276,16 +278,24 @@ module APB_trans #(
     endcase
   end
   
+  assign flag_init = (cur_state == SETUP) && (next_state == ACCESS);
+  
+  // Invalid address detection logic
+  assign invalid_addr = pwrite ? (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR) 
+                               : (paddr != `TDR_ADDR && paddr != `TCR_ADDR && paddr != `TSR_ADDR && paddr != `TCNT_ADDR);
+  
   // Output logic: pready and pslverr
   always @(posedge pclk or negedge preset_n) begin
     if (!preset_n) begin
       pready    <= 1'b0; 
       pslverr   <= 1'b0;
     end else begin
-      pready  <= (cur_state == SETUP) && (next_state == ACCESS);
-      pslverr <= (cur_state == SETUP) && (next_state == ACCESS) & invalid_addr;
+      pready  <= flag_init;
+      pslverr <= flag_init & invalid_addr;
     end
   end
+  
+  assign flag = flag_init;
  
 endmodule
 
