@@ -15,3 +15,6 @@ A Timer Module in its most basic form is a digital logic circuit that counts up 
 | 0x01   | **TCR** (Control)    | Control signals              | 8         | R/W    | 0           |
 | 0x02   | **TSR** (Status)     | Status flags (e.g. overflow) | 8        | R/W    | 0           |
 | 0x03   | **TCNT** (Counter)   | Current counter value        | 8         | R      | 0           |
+
+## Simulation Environment
+<img width="789" height="483" alt="image" src="https://github.com/user-attachments/assets/18a5035a-2d6f-410e-b2c6-7af1a1c19ae4" />
