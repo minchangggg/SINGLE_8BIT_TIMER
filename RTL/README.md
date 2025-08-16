@@ -1,3 +1,5 @@
+Phần set by hard, clear by soft là như nào mới đúng
+
 ## [NOTE]
 <img width="698" height="453" alt="image" src="https://github.com/user-attachments/assets/356f88df-bc27-4c35-b9b9-35cfd1510fc3" />
 
