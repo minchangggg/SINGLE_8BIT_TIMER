@@ -1,3 +1,4 @@
+// TRUY CẬP reg_def.v như nào, có cần cop bỏ sang folder này ko
 ## [NOTE]
 ### `Coverage report` 
 ```verilog
