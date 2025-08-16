@@ -1,4 +1,6 @@
 // Truy cập reg_def.v như nào, có cần cop bỏ sang folder này ko
+// file tb gọi file testcase, hay ngược lại
+
 ## [NOTE]
 ### `Coverage report` 
 ```verilog
